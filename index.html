@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prestin Artis · VCD / UX / UI Designer</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; background: #fff; overflow: hidden; }
+    canvas { display: block; touch-action: none; cursor: default; }
+    footer {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      padding: 18px 22px;
+      display: flex; justify-content: space-between; align-items: center;
+      pointer-events: none;
+      font-family: sans-serif; font-size: 11px; color: #111; letter-spacing: 0.04em;
+    }
+    footer > * { pointer-events: auto; }
+    #info-btn { background: none; border: none; cursor: pointer; font: inherit; color: inherit; }
+    #about {
+      position: fixed; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity .25s;
+    }
+    #about.open { opacity: 1; pointer-events: auto; }
+    .card {
+      background: #fff; padding: 48px 44px; max-width: 420px; width: 90%;
+      box-shadow: 0 8px 40px rgba(0,0,0,.12);
+      font-family: sans-serif; font-size: 13px; line-height: 1.7; color: #111;
+    }
+    .card a { color: inherit; }
+    .links { list-style: none; margin-top: 22px; display: flex; gap: 20px; }
+  </style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<section id="about" aria-hidden="true">
+  <div class="card">
+    <p>Prestin Artis is a VCD / UX / UI designer.</p>
+    <ul class="links">
+      <li><a href="mailto:l25spam@gmail.com">Email</a></li>
+    </ul>
+  </div>
+</section>
+<footer>
+  <p>VCD / UX / UI Designer</p>
+  <button id="info-btn">Info</button>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  const { Engine, World, Bodies, Body, Events, Constraint } = Matter;
+
+  // Raise to 100 if letter curves look coarse; lower to speed up rendering
+  const SVG_SAMPLE_PTS = 60;
+
+  const LETTER_FILES = [
+    [
+      'letters/first name (prestin)/p.svg',
+      'letters/first name (prestin)/r.svg',
+      'letters/first name (prestin)/e.svg',
+      'letters/first name (prestin)/s.svg',
+      'letters/first name (prestin)/t.svg',
+      'letters/first name (prestin)/i.svg',
+      'letters/first name (prestin)/n.svg',
+    ],
+    [
+      'letters/last name (artis)/new A.svg',
+      'letters/last name (artis)/new R.svg',
+      'letters/last name (artis)/T.svg',
+      'letters/last name (artis)/i.svg',
+      'letters/last name (artis)/s.svg',
+    ],
+  ];
+
+  const canvas = document.getElementById('c');
+  const ctx    = canvas.getContext('2d');
+  let W, H, dpr;
+
+  function setupCanvas() {
+    W = window.innerWidth; H = window.innerHeight;
+    dpr = window.devicePixelRatio || 1;
+    canvas.width  = W * dpr; canvas.height = H * dpr;
+    canvas.style.width  = W + 'px'; canvas.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  setupCanvas();
+
+  // ── Physics ───────────────────────────────────────────────────
+  const engine = Engine.create({ gravity: { x: 0, y: 1.0 } });
+  const world  = engine.world;
+
+  World.add(world, [
+    Bodies.rectangle(W / 2,  H - 10,  W + 400, 120, { isStatic: true }), // floor
+    Bodies.rectangle(W / 2,  -60,     W + 400, 120, { isStatic: true }), // ceiling
+    Bodies.rectangle(-60,    H / 2,   120, H + 400, { isStatic: true }), // left
+    Bodies.rectangle(W + 60, H / 2,   120, H + 400, { isStatic: true }), // right
+  ]);
+
+  const letterBodies = [];
+  const softBodies   = new Map(); // body.id → SoftBody
+
+  // ── Parse SVG — keep raw 'd' for path sampling ────────────────
+  function parseSVG(text) {
+    const doc  = new DOMParser().parseFromString(text, 'image/svg+xml');
+    const svg  = doc.querySelector('svg');
+    const vb   = (svg.getAttribute('viewBox') || '').trim().split(/\s+/);
+    const svgW = parseFloat(vb[2] || svg.getAttribute('width'));
+    const svgH = parseFloat(vb[3] || svg.getAttribute('height'));
+    const paths = [];
+    for (const el of doc.querySelectorAll('path')) {
+      const d = el.getAttribute('d');
+      paths.push({
+        p:  new Path2D(d),
+        d,
+        sw: parseFloat(el.getAttribute('stroke-width') || '1'),
+      });
+    }
+    return { svgW, svgH, paths };
+  }
+
+  // ── Sample path into evenly-spaced points ─────────────────────
+  function samplePath(d, n) {
+    try {
+      const el = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      el.setAttribute('d', d);
+      const len = el.getTotalLength();
+      if (len === 0) return [];
+      const pts = [];
+      for (let i = 0; i <= n; i++) {
+        const pt = el.getPointAtLength(len * i / n);
+        pts.push({ x: pt.x, y: pt.y });
+      }
+      return pts;
+    } catch (_) {
+      return [];
+    }
+  }
+
+  // ── SoftBody — 6×6 grid displacement field ────────────────────
+  // Each cell stores [dx, dy, vx, vy]. Integration is per-tick (not per-second)
+  // so impulses can be applied directly in pixel-per-tick units.
+  class SoftBody {
+    constructor(svgData, body) {
+      this.body = body;
+      this.svgW = svgData.svgW;
+      this.svgH = svgData.svgH;
+      // Polygon bodies store their centroid in SVG space; rectangles default to center
+      this.svgCx = body.svgCx ?? svgData.svgW / 2;
+      this.svgCy = body.svgCy ?? svgData.svgH / 2;
+
+      const G = 6;
+      this.G = G;
+      // Float32Array: [dx, dy, vx, vy] × G×G cells
+      this.cells = new Float32Array(G * G * 4);
+      // Pre-allocated coupling-force accumulators — reused every tick, no GC pressure
+      this.cfx   = new Float32Array(G * G);
+      this.cfy   = new Float32Array(G * G);
+
+      // Pre-sample each stroke path into points (done once at spawn)
+      this.paths = svgData.paths.map(({ p, d, sw }) => ({
+        p,                      // Path2D for hit-testing
+        pts: samplePath(d, SVG_SAMPLE_PTS),
+        sw,
+      }));
+      // Pre-allocated scratch buffers for deformed points — reused every frame, no GC pressure
+      this.deformedPts = this.paths.map(({ pts }) => new Float32Array(pts.length * 2));
+    }
+
+    // Bilinear interpolation of displacement at SVG-local (px, py)
+    deformPoint(px, py) {
+      const { G, svgW, svgH, cells } = this;
+      const u  = (px / svgW) * (G - 1);
+      const v  = (py / svgH) * (G - 1);
+      const gx = Math.min(G - 2, Math.max(0, u | 0));
+      const gy = Math.min(G - 2, Math.max(0, v | 0));
+      const fx = u - gx, fy = v - gy;
+
+      const i00 = (gy       * G + gx)     * 4;
+      const i10 = (gy       * G + gx + 1) * 4;
+      const i01 = ((gy + 1) * G + gx)     * 4;
+      const i11 = ((gy + 1) * G + gx + 1) * 4;
+
+      const w00 = (1 - fx) * (1 - fy);
+      const w10 = fx       * (1 - fy);
+      const w01 = (1 - fx) * fy;
+      const w11 = fx       * fy;
+
+      return {
+        x: px + cells[i00]*w00 + cells[i10]*w10 + cells[i01]*w01 + cells[i11]*w11,
+        y: py + cells[i00+1]*w00 + cells[i10+1]*w10 + cells[i01+1]*w01 + cells[i11+1]*w11,
+      };
+    }
+
+    // Apply velocity impulse in SVG-local space at local position (lx, ly)
+    applyLocalImpulse(lx, ly, ivx, ivy) {
+      const { G, svgW, svgH, cells } = this;
+      const radius = Math.max(svgW, svgH) * 0.55;
+      for (let gy = 0; gy < G; gy++) {
+        for (let gx = 0; gx < G; gx++) {
+          const rx   = (gx / (G - 1)) * svgW;
+          const ry   = (gy / (G - 1)) * svgH;
+          const dist = Math.hypot(lx - rx, ly - ry);
+          const w    = Math.max(0, 1 - dist / radius) ** 2;
+          const i    = (gy * G + gx) * 4;
+          cells[i + 2] += ivx * w;
+          cells[i + 3] += ivy * w;
+        }
+      }
+    }
+
+    // Apply impulse from a world-space position and world-space velocity
+    applyWorldImpulse(wx, wy, iwx, iwy) {
+      const body   = this.body;
+      const cosA   = Math.cos(-body.angle);
+      const sinA   = Math.sin(-body.angle);
+      const dx     = wx - body.position.x;
+      const dy     = wy - body.position.y;
+      // To SVG-local: undo body rotation, undo scale, shift by centroid position
+      const lx     = (cosA * dx - sinA * dy) / body.svgScale + this.svgCx;
+      const ly     = (sinA * dx + cosA * dy) / body.svgScale + this.svgCy;
+      // Impulse in local space
+      const ilx    = (cosA * iwx - sinA * iwy) / body.svgScale;
+      const ily    = (sinA * iwx + cosA * iwy) / body.svgScale;
+      this.applyLocalImpulse(lx, ly, ilx, ily);
+    }
+
+    // Per-tick spring integration with neighbor coupling for wave-like propagation
+    update() {
+      const { cells, G, svgW, svgH, cfx, cfy } = this;
+      const k    = 0.04;   // very soft spring → slow, heavy recovery
+      const kc   = 0.024;  // coupling — deformation ripples into adjacent cells
+      const damp = 0.06;   // low damping → pronounced wobble that gradually settles
+      const maxD = Math.min(svgW, svgH) * 0.35;
+
+      // Pre-pass: accumulate coupling forces between adjacent pairs (no update-order bias)
+      cfx.fill(0);
+      cfy.fill(0);
+      for (let gy = 0; gy < G; gy++) {
+        for (let gx = 0; gx < G; gx++) {
+          const ci = gy * G + gx;
+          const i  = ci * 4;
+          if (gx < G - 1) {
+            const ni = ci + 1, j = ni * 4;
+            const ddx = cells[i] - cells[j], ddy = cells[i+1] - cells[j+1];
+            cfx[ci] -= kc * ddx; cfy[ci] -= kc * ddy;
+            cfx[ni] += kc * ddx; cfy[ni] += kc * ddy;
+          }
+          if (gy < G - 1) {
+            const ni = ci + G, j = ni * 4;
+            const ddx = cells[i] - cells[j], ddy = cells[i+1] - cells[j+1];
+            cfx[ci] -= kc * ddx; cfy[ci] -= kc * ddy;
+            cfx[ni] += kc * ddx; cfy[ni] += kc * ddy;
+          }
+        }
+      }
+
+      // Integrate: restore toward zero + coupling wave + damping
+      for (let ci = 0, i = 0; i < G * G * 4; ci++, i += 4) {
+        cells[i+2] = cells[i+2] * (1 - damp) - k * cells[i]   + cfx[ci];
+        cells[i+3] = cells[i+3] * (1 - damp) - k * cells[i+1] + cfy[ci];
+        cells[i]   += cells[i+2];
+        cells[i+1] += cells[i+3];
+        const d = Math.hypot(cells[i], cells[i+1]);
+        if (d > maxD) {
+          const s = maxD / d;
+          cells[i]   *= s; cells[i+1] *= s;
+          cells[i+2] *= 0.5; cells[i+3] *= 0.5;
+        }
+      }
+    }
+
+    // Draw deformed letter paths
+    draw(ctx) {
+      const body = this.body;
+      ctx.save();
+      ctx.translate(body.position.x, body.position.y);
+      ctx.rotate(body.angle);
+      ctx.scale(body.svgScale, body.svgScale);
+      ctx.translate(-this.svgCx, -this.svgCy);
+
+      ctx.lineCap  = 'round';
+      ctx.lineJoin = 'round';
+
+      // Compute deformed points once into pre-allocated Float32Array buffers
+      for (let pi = 0; pi < this.paths.length; pi++) {
+        const pts = this.paths[pi].pts;
+        const buf = this.deformedPts[pi];
+        for (let i = 0; i < pts.length; i++) {
+          const dp = this.deformPoint(pts[i].x, pts[i].y);
+          buf[i * 2]     = dp.x;
+          buf[i * 2 + 1] = dp.y;
+        }
+      }
+
+      // Pass 1 — background-colored buffer stroke.
+      // Invisible against the page background; only shows as a separation gap
+      // when two black letters overlap or press into each other.
+      ctx.strokeStyle = '#fff';
+      for (let pi = 0; pi < this.paths.length; pi++) {
+        const { sw } = this.paths[pi];
+        const buf = this.deformedPts[pi];
+        const len = this.paths[pi].pts.length;
+        if (!len) continue;
+        ctx.lineWidth = sw + 2;
+        ctx.beginPath();
+        ctx.moveTo(buf[0], buf[1]);
+        for (let i = 1; i < len; i++) ctx.lineTo(buf[i * 2], buf[i * 2 + 1]);
+        ctx.stroke();
+      }
+
+      // Pass 2 — black letter on top
+      ctx.strokeStyle = '#000';
+      for (let pi = 0; pi < this.paths.length; pi++) {
+        const { sw } = this.paths[pi];
+        const buf = this.deformedPts[pi];
+        const len = this.paths[pi].pts.length;
+        if (!len) continue;
+        ctx.lineWidth = sw;
+        ctx.beginPath();
+        ctx.moveTo(buf[0], buf[1]);
+        for (let i = 1; i < len; i++) ctx.lineTo(buf[i * 2], buf[i * 2 + 1]);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+  }
+
+  // ── SVG-aware hit testing via isPointInStroke ─────────────────
+  // 1×1 offscreen canvas — only used as a test context, size doesn't matter
+  const hitCanvas = document.createElement('canvas');
+  hitCanvas.width = hitCanvas.height = 1;
+  const hitCtx = hitCanvas.getContext('2d');
+
+  function hitTestSVG(sb, mx, my) {
+    const body = sb.body;
+    // Transform (mx, my) into SVG-local coordinates
+    const cosA = Math.cos(-body.angle);
+    const sinA = Math.sin(-body.angle);
+    const dx   = mx - body.position.x;
+    const dy   = my - body.position.y;
+    const lx   = (cosA * dx - sinA * dy) / body.svgScale + sb.svgCx;
+    const ly   = (sinA * dx + cosA * dy) / body.svgScale + sb.svgCy;
+
+    // Test each stroke path at identity transform
+    hitCtx.setTransform(1, 0, 0, 1, 0, 0);
+    for (const { p, sw } of sb.paths) {
+      // Stroke half-width + small finger-friendly padding
+      hitCtx.lineWidth = sw * 1.1 + 10;
+      if (hitCtx.isPointInStroke(p, lx, ly)) return true;
+    }
+    return false;
+  }
+
+  // ── Spawn letters ─────────────────────────────────────────────
+  function spawnLetters(rows) {
+    const rowH = H;
+
+    rows.forEach((row, ri) => {
+      let scales = row.map(l => rowH / l.svgH);
+      let widths = row.map((l, i) => l.svgW * scales[i]);
+      let tw     = widths.reduce((s, w) => s + w, 0);
+
+      if (tw > W) {
+        const sf = W / tw;
+        scales = scales.map(s => s * sf);
+        widths = widths.map(w => w * sf);
+        tw     = W;
+      }
+
+      // PRESTIN spawns upper-center, ARTIS lower-center
+      const cy = ri === 0 ? H * 0.26 : H * 0.70;
+      let x    = (W - tw) / 2;
+
+      row.forEach((data, li) => {
+        const scale = scales[li];
+        const visW  = widths[li];
+        const visH  = data.svgH * scale;
+        const cx    = x + visW / 2;
+
+        const hw = visW * 0.47;
+        const hh = visH * 0.47;
+
+        const bodyOpts = {
+          label:          'letter',
+          restitution:    0.08,
+          friction:       0.04,
+          frictionStatic: 0,
+          frictionAir:    0.012,
+          density:        0.002,
+        };
+
+        // TEST: first-name R uses a 5-point convex polygon instead of a rectangle.
+        // Removes the lower-right void (below the leg) that causes phantom collisions.
+        // Polygon centroid in SVG space ≈ (107, 161); stored so coordinate conversions stay exact.
+        let body;
+        if (ri === 0 && li === 1) {
+          const s = scale;
+          const verts = [
+            { x:   0 * s, y:   0 * s },
+            { x: 217 * s, y:   0 * s },
+            { x: 217 * s, y: 210 * s },
+            { x: 200 * s, y: 325 * s },
+            { x:   0 * s, y: 326 * s },
+          ];
+          body = Bodies.fromVertices(cx, cy, verts, bodyOpts);
+          body.svgCx = 107.0;
+          body.svgCy = 161.0;
+        } else {
+          body = Bodies.rectangle(cx, cy, hw * 2, hh * 2, bodyOpts);
+        }
+
+        body.svgScale = scale;
+        body.svgW     = data.svgW;
+        body.svgH     = data.svgH;
+        body.hw       = hw;
+        body.hh       = hh;
+
+        World.add(world, body);
+        letterBodies.push(body);
+        softBodies.set(body.id, new SoftBody(data, body));
+        x += visW;
+      });
+    });
+  }
+
+  // ── NaN / Infinity guard ──────────────────────────────────────
+  // Returns an error string on the first bad value found, null if clean.
+  // isFinite(x) returns false for both NaN and ±Infinity.
+  function sanityCheck() {
+    for (const body of letterBodies) {
+      if (!isFinite(body.position.x) || !isFinite(body.position.y) ||
+          !isFinite(body.velocity.x) || !isFinite(body.velocity.y) ||
+          !isFinite(body.angle)) {
+        return `body "${body.label}" has non-finite position/velocity/angle`;
+      }
+      const sb = softBodies.get(body.id);
+      if (sb) {
+        const c = sb.cells;
+        for (let i = 0; i < c.length; i++) {
+          if (!isFinite(c[i])) return `soft body "${body.label}" cell[${i}] is non-finite`;
+        }
+      }
+    }
+    return null;
+  }
+
+  // ── Sustained-pressure deformation — DISABLED for contact stability diagnostic ──
+  // Events.on(engine, 'collisionActive', ...);
+
+  // ── Collision → apply impulse to soft-body contact region ─────
+  Events.on(engine, 'collisionStart', event => {
+    for (const pair of event.pairs) {
+      const { bodyA, bodyB } = pair;
+      const nx  = pair.collision.normal.x;
+      const ny  = pair.collision.normal.y;
+      const rvx = bodyA.velocity.x - bodyB.velocity.x;
+      const rvy = bodyA.velocity.y - bodyB.velocity.y;
+      const spd = Math.abs(rvx * nx + rvy * ny);
+      if (spd < 0.8) continue;
+
+      // Scale impulse by impact speed; clamp to avoid explosion
+      const imp = Math.min(spd * 0.28, 9);
+
+      const sbA = softBodies.get(bodyA.id);
+      const sbB = softBodies.get(bodyB.id);
+
+      if (sbA) {
+        // Contact face on A is toward B: A.pos + nx*extent, compressed by nx direction
+        const cx = bodyA.position.x + nx * bodyA.hh * 0.7;
+        const cy = bodyA.position.y + ny * bodyA.hh * 0.7;
+        sbA.applyWorldImpulse(cx, cy, nx * imp, ny * imp);
+      }
+      if (sbB) {
+        // Contact face on B is toward A: B.pos - nx*extent
+        const cx = bodyB.position.x - nx * bodyB.hh * 0.7;
+        const cy = bodyB.position.y - ny * bodyB.hh * 0.7;
+        sbB.applyWorldImpulse(cx, cy, -nx * imp, -ny * imp);
+      }
+    }
+  });
+
+  // ── Drag — SVG hit-test + constraint-based pull ──────────────
+  let dragBody       = null;
+  let dragConstraint = null;
+  let dragOffset     = { x: 0, y: 0 };
+  const cursor       = { x: 0, y: 0 };
+
+  function getPos(e) {
+    const r   = canvas.getBoundingClientRect();
+    const src = e.touches?.[0] ?? e;
+    return { x: src.clientX - r.left, y: src.clientY - r.top };
+  }
+
+  canvas.addEventListener('pointerdown', e => {
+    const p = getPos(e);
+    cursor.x = p.x; cursor.y = p.y;
+    // Guard: remove any stale constraint left by a missed pointerup (e.g. alt-tab, focus loss)
+    if (dragConstraint) { World.remove(world, dragConstraint); dragConstraint = null; dragBody = null; }
+    // Iterate back-to-front so topmost (last drawn) letter wins
+    for (let i = letterBodies.length - 1; i >= 0; i--) {
+      const body = letterBodies[i];
+      const sb   = softBodies.get(body.id);
+      if (!sb || !hitTestSVG(sb, p.x, p.y)) continue;
+
+      dragBody = body;
+      const cosA = Math.cos(-body.angle);
+      const sinA = Math.sin(-body.angle);
+      const dx   = p.x - body.position.x;
+      const dy   = p.y - body.position.y;
+      dragOffset = { x: cosA * dx - sinA * dy, y: sinA * dx + cosA * dy };
+
+      // Spring constraint pulls body at the exact grab point — no teleporting
+      dragConstraint = Constraint.create({
+        bodyA:     body,
+        pointA:    { x: dragOffset.x, y: dragOffset.y },
+        pointB:    { x: p.x, y: p.y },
+        stiffness: 0.15,
+        damping:   0.1,
+        length:    0,
+      });
+      World.add(world, dragConstraint);
+
+      canvas.setPointerCapture(e.pointerId);
+      canvas.style.cursor = 'grabbing';
+      break;
+    }
+  });
+
+  let cursorRafId = 0;
+  const cursorCheckPos = { x: 0, y: 0 };
+  canvas.addEventListener('pointermove', e => {
+    const p = getPos(e);
+    cursor.x = p.x; cursor.y = p.y;
+    if (dragConstraint) {
+      dragConstraint.pointB.x = p.x;
+      dragConstraint.pointB.y = p.y;
+    }
+    if (!dragBody) {
+      cursorCheckPos.x = p.x; cursorCheckPos.y = p.y;
+      // Throttle hit-testing to one check per animation frame — isPointInStroke
+      // is expensive and pointermove can fire 200+ times/sec on some devices.
+      if (!cursorRafId) {
+        cursorRafId = requestAnimationFrame(() => {
+          cursorRafId = 0;
+          const hit = letterBodies.some(b => {
+            const sb = softBodies.get(b.id);
+            return sb && hitTestSVG(sb, cursorCheckPos.x, cursorCheckPos.y);
+          });
+          canvas.style.cursor = hit ? 'grab' : 'default';
+        });
+      }
+    }
+  });
+
+  canvas.addEventListener('pointerup', () => {
+    if (dragConstraint) {
+      World.remove(world, dragConstraint);
+      dragConstraint = null;
+    }
+    if (dragBody) {
+      const spd = Math.hypot(dragBody.velocity.x, dragBody.velocity.y);
+      if (spd > 2) {
+        const sb  = softBodies.get(dragBody.id);
+        const imp = Math.min(spd * 0.18, 6);
+        const vx  = dragBody.velocity.x, vy = dragBody.velocity.y;
+        const mag = Math.hypot(vx, vy);
+        sb?.applyWorldImpulse(
+          dragBody.position.x, dragBody.position.y,
+          (vx / mag) * imp, (vy / mag) * imp
+        );
+      }
+    }
+    dragBody = null;
+    canvas.style.cursor = 'default';
+  });
+
+  function releaseDrag() {
+    if (dragConstraint) { World.remove(world, dragConstraint); dragConstraint = null; }
+    dragBody = null;
+    canvas.style.cursor = 'default';
+  }
+  canvas.addEventListener('pointercancel',      releaseDrag);
+  canvas.addEventListener('lostpointercapture', releaseDrag);
+
+  // Drag: apply stretch deformation in direction of travel (constraint handles positioning)
+  Events.on(engine, 'beforeUpdate', () => {
+    if (!dragBody || !dragConstraint) return;
+    const sb  = softBodies.get(dragBody.id);
+    const spd = Math.hypot(dragBody.velocity.x, dragBody.velocity.y);
+    if (spd > 5 && sb) {
+      const vx  = dragBody.velocity.x, vy = dragBody.velocity.y;
+      const mag = Math.hypot(vx, vy);
+      const ndx = vx / mag, ndy = vy / mag;
+      const force = Math.min(spd * 0.10, 4);
+      const frontX = dragBody.position.x + ndx * dragBody.hw * 0.65;
+      const frontY = dragBody.position.y + ndy * dragBody.hw * 0.65;
+      const backX  = dragBody.position.x - ndx * dragBody.hw * 0.65;
+      const backY  = dragBody.position.y - ndy * dragBody.hw * 0.65;
+      sb.applyWorldImpulse(frontX, frontY,  ndx * force,       ndy * force);
+      sb.applyWorldImpulse(backX,  backY,  -ndx * force * 0.5, -ndy * force * 0.5);
+    }
+  });
+
+  // ── Render loop — fixed 60fps physics step regardless of display Hz ──
+  const STEP_MS  = 1000 / 60;
+  let prev        = 0;
+  let accumulator = 0;
+
+  // Performance counters — snapshot updated once per second
+  const perf = {
+    fps: 0, physicsMs: 0, renderMs: 0, stepsPerFrame: 0,
+    lastSecond: 0,
+    _frames: 0, _physicsAcc: 0, _renderAcc: 0, _stepsAcc: 0,
+  };
+
+  // Simulation pause — toggled by [P]; set automatically by sanityCheck
+  let simPaused   = false;
+  let pauseReason = ''; // non-empty = auto-paused with error message
+
+  // Loop guard — ensures requestAnimationFrame(loop) is called exactly once
+  let loopStarted = false;
+
+  function loop(ts) {
+    requestAnimationFrame(loop);
+    const elapsed = Math.min(ts - prev, 33);
+    prev = ts;
+
+    perf._frames++;
+    let stepsThisFrame = 0;
+
+    if (!simPaused) {
+      accumulator += elapsed;
+      const physStart = performance.now();
+      while (accumulator >= STEP_MS) {
+        Engine.update(engine, STEP_MS);
+        for (const sb of softBodies.values()) sb.update();
+        accumulator -= STEP_MS;
+        stepsThisFrame++;
+      }
+      perf._physicsAcc += performance.now() - physStart;
+      perf._stepsAcc   += stepsThisFrame;
+
+      const err = sanityCheck();
+      if (err) {
+        simPaused = true;
+        pauseReason = 'AUTO-PAUSED — ' + err;
+        console.error('[sanityCheck]', err);
+      }
+    }
+
+    const renderStart = performance.now();
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    for (const body of letterBodies) {
+      softBodies.get(body.id)?.draw(ctx);
+    }
+    perf._renderAcc += performance.now() - renderStart;
+
+    // Snapshot perf counters once per second
+    if (ts - perf.lastSecond >= 1000) {
+      const f = perf._frames || 1;
+      perf.fps           = perf._frames;
+      perf.physicsMs     = perf._physicsAcc / f;
+      perf.renderMs      = perf._renderAcc  / f;
+      perf.stepsPerFrame = perf._stepsAcc   / f;
+      perf._frames = perf._physicsAcc = perf._renderAcc = perf._stepsAcc = 0;
+      perf.lastSecond = ts;
+    }
+
+    if (debugOn) {
+      // Performance HUD — two lines at top-left
+      ctx.save();
+      ctx.font = '11px monospace';
+      ctx.fillStyle = 'red';
+      ctx.fillText(
+        `FPS: ${perf.fps}  physics: ${perf.physicsMs.toFixed(2)}ms  ` +
+        `render: ${perf.renderMs.toFixed(2)}ms  steps/frame: ${perf.stepsPerFrame.toFixed(1)}`,
+        10, 18
+      );
+      ctx.fillText(
+        `SVG_SAMPLE_PTS: ${SVG_SAMPLE_PTS}  constraints: ${world.constraints.length}` +
+        `  bodies: ${world.bodies.length}  [D] hide  [P] pause`,
+        10, 32
+      );
+      ctx.restore();
+
+      // Red: rigid collider rectangles
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,0,0,0.7)';
+      ctx.lineWidth = 1.5;
+      for (const body of letterBodies) {
+        const v = body.vertices;
+        ctx.beginPath();
+        ctx.moveTo(v[0].x, v[0].y);
+        for (let i = 1; i < v.length; i++) ctx.lineTo(v[i].x, v[i].y);
+        ctx.closePath();
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // Blue: drag grab point
+      if (dragBody && dragConstraint) {
+        const cosA = Math.cos(dragBody.angle);
+        const sinA = Math.sin(dragBody.angle);
+        const wx = dragBody.position.x + cosA * dragOffset.x - sinA * dragOffset.y;
+        const wy = dragBody.position.y + sinA * dragOffset.x + cosA * dragOffset.y;
+        ctx.save();
+        ctx.fillStyle = 'rgba(0,100,255,0.85)';
+        ctx.beginPath(); ctx.arc(wx, wy, 5, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = 'rgba(0,100,255,0.85)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(wx, wy);
+        ctx.lineTo(dragConstraint.pointB.x, dragConstraint.pointB.y);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    // Pause overlay — shown regardless of debugOn
+    if (simPaused) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(255,255,255,0.72)';
+      ctx.fillRect(0, 0, W, H);
+      ctx.textAlign = 'center';
+      if (pauseReason) {
+        ctx.font = 'bold 13px monospace';
+        ctx.fillStyle = '#c00';
+        ctx.fillText(pauseReason, W / 2, H / 2 - 10);
+        ctx.font = '11px monospace';
+        ctx.fillStyle = '#555';
+        ctx.fillText('[P] dismiss and resume  —  see console for details', W / 2, H / 2 + 8);
+      } else {
+        ctx.font = 'bold 13px monospace';
+        ctx.fillStyle = '#111';
+        ctx.fillText('PAUSED', W / 2, H / 2 - 10);
+        ctx.font = '11px monospace';
+        ctx.fillStyle = '#555';
+        ctx.fillText('[P] resume', W / 2, H / 2 + 8);
+      }
+      ctx.textAlign = 'left';
+      ctx.restore();
+    }
+  }
+
+  let debugOn = false;
+  document.addEventListener('keydown', e => {
+    if (e.key === 'd' || e.key === 'D') debugOn = !debugOn;
+    if (e.key === 'p' || e.key === 'P') {
+      simPaused = !simPaused;
+      if (!simPaused) pauseReason = ''; // clear auto-pause error on manual resume
+    }
+  });
+
+  // ── Info modal ────────────────────────────────────────────────
+  const about   = document.getElementById('about');
+  const infoBtn = document.getElementById('info-btn');
+  let infoOpen  = false;
+  function toggleInfo(open = !infoOpen) {
+    infoOpen = open;
+    about.classList.toggle('open', open);
+    about.setAttribute('aria-hidden', String(!open));
+    infoBtn.textContent = open ? 'Close' : 'Info';
+  }
+  infoBtn.addEventListener('click', () => toggleInfo());
+  about.addEventListener('click', e => { if (e.target === about) toggleInfo(false); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && infoOpen) toggleInfo(false); });
+
+  window.addEventListener('resize', setupCanvas);
+
+  // ── Load SVGs → spawn → start ─────────────────────────────────
+  Promise.all(
+    LETTER_FILES.map(row =>
+      Promise.all(row.map(f => fetch(encodeURI(f)).then(r => r.text()).then(parseSVG)))
+    )
+  ).then(rows => {
+    spawnLetters(rows);
+    if (!loopStarted) { loopStarted = true; requestAnimationFrame(loop); }
+  });
+})();
+</script>
+</body>
+</html>
