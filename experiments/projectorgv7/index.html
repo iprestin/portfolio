@@ -1,0 +1,2883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PRESTIN ARTIS — projectorgv7 (projects)</title>
+  <style>
+    :root { color-scheme: light; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #fff; }
+    html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; } /* iOS would enlarge text when the phone turns sideways */
+    canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: default; }
+    canvas.grab    { cursor: grab; }
+    canvas.grabbing { cursor: grabbing; }
+    canvas.pop     { cursor: pointer; }
+    #glass { position: fixed; inset: 0; pointer-events: none; }
+    #glass[hidden] { display: none; }
+    #pop-hint { position: fixed; z-index: 3; pointer-events: none; color: #111; display: flex; flex-direction: column; align-items: flex-start;
+      font: 26px/1 'Gaegu', 'Comic Sans MS', cursive; opacity: 0; transition: opacity .5s; }
+    #pop-hint span { transform: rotate(-5deg); margin-left: 18px; }
+    #pop-hint svg { width: 46px; height: 36px; margin-top: 2px; transform: scaleX(-1); overflow: visible; }
+    #pop-hint path { fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
+      stroke-dasharray: 80; stroke-dashoffset: 80; transition: stroke-dashoffset .6s .3s ease-out; }
+    #pop-hint.show { opacity: 1; }
+    #pop-hint.show path { stroke-dashoffset: 0; } /* `canvas{display:block}` would otherwise override [hidden] */
+
+    footer {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 6; /* its buttons stay usable over Info */
+      padding: 18px 22px calc(18px + env(safe-area-inset-bottom, 0px));
+      /* three columns so Projects sits on the true centre, whatever the side widths */
+      display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+      pointer-events: none;
+      font-family: sans-serif; font-size: 11px; color: #111; letter-spacing: 0.04em;
+    }
+    footer > * { pointer-events: auto; }
+    #info-btn { justify-self: end; }
+    #info-btn, #projects-btn, #soon-btn {
+      background: none; border: none; cursor: pointer;
+      font: inherit; color: inherit; letter-spacing: inherit;
+      padding: 10px 12px; margin: -10px -12px; /* bigger tap target, same layout */
+    }
+
+    /* Projects: a sheet that slides up behind the footer */
+    #projects { position: fixed; inset: 0; pointer-events: none; }
+    /* only the sheet takes taps, so letters around it stay draggable */
+    #projects.open .sheet { pointer-events: auto; }
+    .sheet {
+      position: absolute; left: 0; right: 0; bottom: 0;
+      height: min(78vh, 760px);
+      background: #fff; box-shadow: 0 -8px 40px rgba(0,0,0,.10);
+      transform: translateY(100%); transition: transform .45s cubic-bezier(.2,.8,.2,1);
+      overflow-y: auto; -webkit-overflow-scrolling: touch;
+      padding: 36px 22px calc(72px + env(safe-area-inset-bottom, 0px));
+      font-family: sans-serif; color: #111;
+    }
+    #projects.open .sheet { transform: translateY(0); }
+    /* while the sheet is up, the footer turns solid so cards scroll under it, not through its text */
+    footer { transition: background-color .45s; }
+    #projects.open ~ footer { background: #fff; }
+    .sheet h2 {
+      font-size: 11px; font-weight: normal; letter-spacing: 0.04em; text-transform: uppercase;
+      max-width: 1200px; margin: 0 auto 24px;
+    }
+    .project-grid {
+      /* three across on desktop (the six projects read as two rows of three), two on tablets, one on phones */
+      display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 28px 20px; max-width: 1200px; margin: 0 auto;
+    }
+    @media (max-width: 860px) { .project-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 543px) { .project-grid { grid-template-columns: 1fr; } }
+    .project { font-size: 13px; line-height: 1.5; }
+    .project .thumb { aspect-ratio: 4 / 3; background: #ece9e2; margin-bottom: 10px; }
+    .project .thumb img, .project .thumb video { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .project .meta { font-size: 11px; color: #777; letter-spacing: 0.04em; }
+    /* one card per row (phone): cover runs nearly edge to edge */
+    @media (max-width: 543px) {
+      .sheet { padding-left: 8px; padding-right: 8px; }
+      .sheet h2, .project p { padding: 0 6px; }
+      .project-grid { gap: 36px; }
+    }
+    @media (prefers-reduced-motion: reduce) { .sheet { transition: none; } }
+
+    /* projectorgv5: the list fills the page below the masthead band; its slide is driven by the
+       stage so its top edge rides the letters' floor (no CSS transition to race ahead of it) */
+    .sheet { top: var(--sheet-top, 26vh); height: auto; transition: none; }
+
+    /* projectorgv6: the sheet shows the list or one case study (which one follows the address) */
+    .project { display: block; color: inherit; text-decoration: none; }
+    #project-view[hidden], #list-view[hidden] { display: none; }
+    /* projectorgv7 cohesion pass: one 12-column grid, one gutter, one corner radius, one type size.
+       Media never stretches past its own pixel width (--max), so a small file is paired in a row
+       in projects.json instead of being upscaled to fill. The side margins grow with the window
+       (4.5vw counting the sheet's own 22px, as on malaikafrancique.com) and there is no cap: the work
+       fills the screen at any size (1310px of content at 1440, 1638 at 1800). On a screen wider than a
+       file, that file sits at its own width, centred, rather than being stretched. */
+    .case { --gut: 20px; --igut: 35px; --r: 8px; --grey: #777;
+      box-sizing: content-box; margin: 0 auto; padding-inline: max(0px, 4.5vw - 22px);
+      font-size: 14px; line-height: 1.55; }
+    .case a { color: inherit; }
+    .case .back { display: inline-block; color: var(--grey); text-decoration: none; padding: 10px 12px; margin: -10px -12px 14px; }
+    .case figure { margin: 0; }
+    .case .m { display: block; width: 100%; height: auto; background: #f3f3f3; border-radius: var(--r); }
+    /* full column width, capped at the file's own width: a grid item with auto margins would
+       otherwise shrink to whatever has loaded (0 before a lazy image, the poster before a video) */
+    .case .m-wrap { width: 100%; max-width: var(--max, none); margin: 0 auto; }
+    /* inset: the media sits smaller inside its own black ground, with the cut-off top and bottom faded out */
+    .case .m-inset { position: relative; }
+    .case .m-inset .m { background: #000; box-sizing: border-box; object-fit: contain; padding: var(--pad); }
+    .case .m-inset::before { content: ''; position: absolute; inset: 0; border-radius: var(--r); pointer-events: none; z-index: 1;
+      background: linear-gradient(#000 var(--edge), transparent calc(var(--edge) + 12%), transparent calc(100% - var(--edge) - 12%), #000 calc(100% - var(--edge))); }
+    /* frame: a thin white rounded square around the inset media, like a watch face */
+    .case .m-frame { position: absolute; inset: calc(var(--edge) - 12px); z-index: 1; pointer-events: none;
+      border: 1.5px solid rgba(255,255,255,.75); border-radius: 22%; }
+    /* hero, then the introduction in three equal columns, as on malaikafrancique.com: the title highlighted in the letters' pink with
+       the type a line below | the text | credits in grey, right-aligned, without labels */
+    .case-head { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px var(--igut);
+      margin: 48px 0 72px; line-height: 1.4; }
+    .case-head h1 { font-size: inherit; font-weight: normal; line-height: inherit; }
+    .case-head h1 .title { background: #E7006A; color: #fff; padding: 0 .15em;
+      -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+    .case-head h1 .type { display: block; margin-top: 1.2em; }
+    .case-text { max-width: 62ch; }
+    .case-text p + p { margin-top: .8em; }
+    .case-meta { text-align: right; color: var(--grey); }
+    .case-meta dt { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    .case-meta a { text-decoration: underline; text-underline-offset: 2px; }
+    .blocks { display: grid; gap: var(--gut); }
+    .b-row { display: flex; gap: var(--gut); align-items: flex-start; }
+    .b-row > figure { flex: var(--ar) 1 0; min-width: 0; }
+    .b-cols { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--gut); align-items: start; }
+    .b-cols > div { grid-column: span var(--span); display: grid; gap: 12px; }
+    .b-cols h3 { font-size: inherit; }
+    /* a quote sits in the introduction's middle column, at the same size as the text */
+    .b-quote { margin: 32px 0 32px calc((100% - 2 * var(--igut)) / 3 + var(--igut)); width: calc((100% - 2 * var(--igut)) / 3);
+      line-height: 1.4; color: var(--grey); }
+    /* the closing writing sits on the introduction's three columns, the quote in the middle one */
+    .case-notes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px var(--igut);
+      margin-top: 72px; line-height: 1.4; }
+    .case-notes .quote { grid-column: 2; color: var(--grey); }
+    .case-notes .quote + div { grid-column-start: 1; } /* the sections start their own row under it */
+    .case-notes h3 { font-size: inherit; margin-bottom: .4em; }
+    /* the hidden About page: the self-portrait under the title (strokes draw, then the exact ink
+       fades in), the photo under the bio, then each project's title highlighted in its own colour */
+    .portrait { width: min(170px, 42vw); margin-top: 36px; color: #111; position: relative; }
+    /* "← me btw": a hand-drawn arrow and a marker note beside the head, drawn once the portrait is done */
+    .portrait .btw { position: absolute; left: 78%; top: 2%; display: flex; align-items: center; gap: 2px;
+      font: 22px/1 'Gaegu', 'Comic Sans MS', cursive; white-space: nowrap; opacity: 0; transition: opacity .4s .5s; }
+    .portrait .btw svg { width: 46px; height: 22px; overflow: visible; }
+    .portrait .btw path { fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
+      stroke-dasharray: 80; stroke-dashoffset: 80; transition: stroke-dashoffset .5s ease-out; }
+    .portrait.done .btw { opacity: 1; transition-delay: 0s; }
+    .portrait.done .btw path { stroke-dashoffset: 0; }
+    .portrait.done .btw span { animation: btw-in .4s .35s both; }
+    .portrait .btw span { position: relative; }
+    .portrait .btw .to-photo { display: none; } /* phone only: from under "me" toward the photo beside it */
+    @keyframes btw-in { from { opacity: 0; transform: translateX(-4px) rotate(-4deg); } to { opacity: 1; transform: rotate(-4deg); } }
+    .portrait svg { display: block; width: 100%; height: auto; }
+    .portrait .ink { opacity: 0; transition: opacity .5s; }
+    .portrait .strokes { transition: opacity .5s; }
+    .portrait.done .ink { opacity: 1; }
+    .portrait.done .strokes { opacity: 0; }
+    .case .case-meta .about-photo { width: min(280px, 100%); margin: 28px 0 0 auto; }
+    .about-photo img { width: 100%; height: auto; }
+    /* phone: a smaller drawing beside the photo, above the title */
+    @media (max-width: 543px) {
+      .about-top { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: end; margin-top: 8px; }
+      .portrait { width: 56%; margin-top: 0; align-self: center; } /* centred on the photo's height, not standing on its bottom */
+      .portrait .btw { font-size: 17px; }
+      .portrait .btw svg { width: 32px; height: 16px; }
+      .portrait .btw .to-photo { display: block; position: absolute; left: 6px; top: calc(100% - 1px); width: 80%; height: 14px; }
+      .portrait.done .btw .to-photo path { transition-delay: .7s; }
+      .case .about-photo { margin: 0; }
+      .about-top + .case-head { margin-top: 40px; }
+    }
+    .about-work { display: grid; gap: 14px; margin-bottom: 72px; }
+    .about-work a { text-decoration: none; display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; }
+    .about-work .title { color: #fff; padding: 0 .15em; }
+    .about-work .type { color: var(--grey); }
+    .next { display: block; margin-top: 72px; padding-top: 18px; border-top: 1px solid #eee; text-decoration: none; }
+    .next span { color: var(--grey); }
+    .next strong { display: block; margin-top: 2px; }
+    .next-app { display: flex; gap: 14px; align-items: center; }
+    .next-app img { width: 48px; height: 48px; border-radius: 22.5%; flex: none; }
+    .next-app span { display: block; }
+    .next .next-sub { color: var(--grey); margin-top: 2px; }
+    @media (max-width: 860px) { /* tablet: title and credits share the top row, the text runs full width below */
+      .case-head { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .case-text { grid-column: 1 / -1; grid-row: 2; }
+      .b-quote { margin-left: 0; width: auto; }
+      .case-notes { grid-template-columns: 1fr; gap: 24px; }
+      .case-notes .quote { grid-column: auto; }
+    }
+    /* images fade up as they first scroll into view, after malaikafrancique.com's Cargo setting
+       (scrollTransitionFadeUp-3: from 50px low and transparent), stretched over the whole 1.2s with a
+       long ease-out so it settles gently instead of snapping in */
+    /* ticker (phone): after the auto-scrolling strip at the foot of malaikafrancique.com/raggamuffin
+       (Cargo's marquee-set, pointer-interaction on). The images run edge to edge at 38% of the
+       screen's height (never past a file's own height) and loop seamlessly (the track holds them
+       three times). It is the phone's own sideways scroll, so swiping, flinging and tapping feel
+       native; script only adds the slow drift while nobody is touching it */
+    .b-ticker { overflow-x: auto; overflow-y: hidden; margin-inline: -16px; scrollbar-width: none; overscroll-behavior-x: contain; }
+    .b-ticker::-webkit-scrollbar { display: none; }
+    .b-ticker .track { display: flex; gap: var(--gut); padding-right: var(--gut); width: max-content; }
+    .case .b-ticker figure { flex: none; height: min(38vh, var(--h)); aspect-ratio: var(--ar); width: auto; max-width: none; }
+    .case .b-ticker .m { width: 100%; height: 100%; -webkit-user-drag: none; }
+    /* panorama (phone): a very wide piece shown at 40% of the screen's height, edge to edge, gliding
+       slowly from one end to the other and back; it is native sideways scroll, so a finger can pan it */
+    .b-pano { overflow-x: auto; overflow-y: hidden; margin-inline: -16px; scrollbar-width: none; overscroll-behavior-x: contain; }
+    .b-pano::-webkit-scrollbar { display: none; }
+    .case .b-pano figure { height: min(40vh, var(--h)); aspect-ratio: var(--ar); width: auto; max-width: none; }
+    .case .b-pano .m { width: 100%; height: 100%; }
+    @keyframes case-fade-up {
+      from { opacity: 0; transform: translateY(50px); }
+      to { opacity: 1; transform: none; }
+    }
+    .case .blocks figure.fade-wait { opacity: 0; }
+    .case .blocks figure.fade-in { animation: case-fade-up 1200ms cubic-bezier(.22, .61, .36, 1) both; }
+    .zoomable { cursor: zoom-in; }
+    /* protect: no zoom, no drag, no save-image menu (right-click or long-press reaches the figure, not the image) */
+    .m-protect .m { pointer-events: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-user-drag: none; }
+    #zoom { position: fixed; inset: 0; z-index: 10; background: rgba(255,255,255,.96); display: flex;
+      align-items: center; justify-content: center; padding: 16px; cursor: zoom-out; }
+    #zoom[hidden] { display: none; }
+    #zoom img, #zoom video { max-width: 100%; max-height: 100%; object-fit: contain; }
+    /* phone, after malaikafrancique.com's: images and text share one 16px edge (the sheet's 8px plus
+       8px), the introduction is set small and tight, and the credits stay grey on the right */
+    @media (max-width: 543px) {
+      .case { --gut: 12px; font-size: 13.5px; letter-spacing: -.01em; padding-inline: 8px; }
+      .case-head { grid-template-columns: 1fr; gap: 0; margin: 56px 0; line-height: 1.2; }
+      .case-head > * { grid-column: 1 / -1 !important; grid-row: auto !important; }
+      .case-head h1 .type { margin-top: 1.4em; }
+      .case-text { margin-top: 10px; }
+      .case-meta { margin-top: 40px; }
+      .case-notes { margin-top: 56px; line-height: 1.3; }
+      .b-row:not(.keep) { flex-direction: column; }
+      .b-row:not(.keep) > figure { width: 100%; }
+      .b-cols > div { grid-column: span 12; }
+      .b-cols > div:empty { display: none; }
+    }
+
+
+
+    #about, #soon {
+      position: fixed; inset: 0; z-index: 5; /* above the projects sheet, which comes later in the page */
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity .25s;
+    }
+    #about.open, #soon.open { opacity: 1; pointer-events: auto; }
+    #soon h2 { font-size: inherit; font-weight: bold; margin-bottom: 14px; }
+    #soon ul { list-style: none; display: grid; gap: 14px; }
+    #soon a { text-decoration: none; }
+    #soon .app { display: flex; gap: 14px; align-items: flex-start; }
+    #soon .app img { display: block; width: 56px; height: 56px; border-radius: 22.5%; flex: none; } /* the App Store icon, iPhone corners */
+    #soon-btn { justify-self: start; }
+    #about-link { font-weight: bold; text-decoration: none; }
+    .ig-link { text-decoration: none; }
+    /* hovering an Instagram link (mouse only) shows the live profile, from Instagram's own embed */
+    #ig-preview { position: fixed; z-index: 8; width: 340px; height: 374px; border-radius: 8px; overflow: hidden;
+      background: #fff; box-shadow: 0 8px 40px rgba(0,0,0,.18); opacity: 0; pointer-events: none; transition: opacity .2s; }
+    #ig-preview.show { opacity: 1; pointer-events: auto; }
+    #ig-preview iframe { width: 100%; height: 100%; border: 0; }
+    #about .ig { vertical-align: -.15em; margin-right: .35em; } /* the Instagram glyph, drawn in the link's colour */
+    .card {
+      background: #fff; padding: 48px 44px; max-width: 420px; width: 90%;
+      box-shadow: 0 8px 40px rgba(0,0,0,.12);
+      font-family: sans-serif; font-size: 13px; line-height: 1.7; color: #111;
+    }
+    .card a { color: inherit; }
+    .links { list-style: none; margin-top: 22px; display: flex; flex-wrap: wrap; gap: 8px 20px; }
+  </style>
+</head>
+<body>
+  <canvas id="letters"></canvas>
+  <canvas id="glass" hidden></canvas>
+  <div id="pop-hint" aria-hidden="true"><span>pop me</span><svg viewBox="0 0 50 40"><path d="M6 4 C4 18 14 30 40 34 M33 28 L41 34 L33 39"/></svg></div>
+
+  <!-- "VCD / UX / UI" in the footer opens this: what Prestin is working on now, like Info -->
+  <section id="soon" aria-hidden="true">
+    <div class="card">
+      <h2>Currently working on</h2>
+      <!-- what Prestin is working on now, one <li> each -->
+      <ul>
+        <li class="app"><a href="https://apps.apple.com/us/app/pelicula/id6763131679" target="_blank" rel="noopener"><img src="soon/pelicula-icon.png" width="56" height="56" alt=""></a>
+          <div><a href="https://apps.apple.com/us/app/pelicula/id6763131679" target="_blank" rel="noopener"><strong>Pelicula</strong> ↗︎</a><br>
+          An iPhone app I built to rank and track the films you've seen. Out now on the App Store.</div></li>
+        <li>More on the way.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="about" aria-hidden="true">
+    <div class="card">
+      <p>Prestin Artis is a VCD / UX / UI designer.</p>
+      <ul class="links">
+        <li><a href="mailto:partisuw@gmail.com">partisuw@gmail.com</a></li>
+        <li><a href="https://www.instagram.com/iprestin/" class="ig-link" target="_blank" rel="noopener" aria-label="Instagram: @iprestin"><svg class="ig" viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>@iprestin</a></li>
+        <li><a href="#/about" id="about-link">About</a></li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="projects" aria-hidden="true" inert>
+    <div class="sheet" role="dialog" aria-label="Projects">
+      <div id="list-view">
+        <h2>Projects</h2>
+        <!-- cards come from projects.json, in its order -->
+        <div class="project-grid"></div>
+      </div>
+      <div id="project-view" hidden></div>
+    </div>
+  </section>
+  <div id="ig-preview" aria-hidden="true"></div>
+  <div id="zoom" hidden><img alt=""><video muted loop playsinline hidden></video></div>
+
+  <footer>
+    <button id="soon-btn" aria-controls="soon" aria-expanded="false">VCD / UX / UI</button>
+    <button id="projects-btn" aria-expanded="false" aria-controls="projects">Projects</button>
+    <button id="info-btn">Info</button>
+  </footer>
+
+
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   ArtisType — stroke-particle soft-body engine for hand-drawn letters.
+   Each letter is built from its SVG stroke paths as a chain of particles held
+   by distance links, curvature springs and shape recovery; letters collide
+   through a spatial hash. Exposed as window.ArtisType = {Glyph, World}.
+   ═══════════════════════════════════════════════════════════════════════════ */
+(() => {
+  'use strict';
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  class Glyph {
+    constructor(shape,pose,index,customStrokes){
+      const packing=Math.min(pose.packingCap||1.32,pose.packingScale||1);
+      this.char=shape.char;this.index=index;this.w=pose.w*packing;this.h=pose.h*packing;this.angle=pose.angle||0;
+      this.nodes=[];this.paths=[];this.links=[];this.bounds={};this.cx=pose.x;this.cy=pose.y;
+      this.radius=Glyph.strokeRadius(this.char,this.w,this.h);
+      const co=Math.cos(this.angle),si=Math.sin(this.angle);
+      for(const stroke of customStrokes){
+        const local=stroke.points.map(p=>({x:p.x*this.w,y:p.y*this.h}));
+        let length=0;const lengths=[0];for(let i=1;i<local.length;i++){length+=Math.hypot(local[i].x-local[i-1].x,local[i].y-local[i-1].y);lengths.push(length)}
+        const count=Math.max(3,Math.ceil(length/(this.radius*.6))),path=[];
+        for(let i=0;i<=count;i++){
+          if(stroke.closed&&i===count)break;
+          const distance=length*i/count;let j=1;while(j<lengths.length-1&&lengths[j]<distance)j++;
+          const t=(distance-lengths[j-1])/(lengths[j]-lengths[j-1]||1);
+          const lx=local[j-1].x+(local[j].x-local[j-1].x)*t,ly=local[j-1].y+(local[j].y-local[j-1].y)*t;
+          const reach=this.radius*(!stroke.closed&&(i===0||i===count)?1.1:.28);
+          let n=null,best=reach;for(const m of this.nodes){const d=Math.hypot(m.lx-lx,m.ly-ly);if(d<best){n=m;best=d}}
+          if(!n){const ox=lx*co-ly*si,oy=lx*si+ly*co;n={body:this,lx,ly,ox,oy,x:pose.x+ox,y:pose.y+oy,vx:0,vy:0,rx:this.radius,ry:this.radius};this.nodes.push(n)}
+          if(path.at(-1)!==n)path.push(n);
+        }
+        for(let i=1;i<path.length;i++)this.link(path[i-1],path[i]);
+        if(stroke.closed)this.link(path.at(-1),path[0]);
+        this.paths.push({nodes:path,closed:!!stroke.closed});
+      }
+      const owners=new Map(this.nodes.map(n=>[n,new Set()]));this.paths.forEach((p,i)=>p.nodes.forEach(n=>owners.get(n).add(i)));
+      for(const a of this.nodes)for(const b of this.nodes){
+        if(a===b||this.nodes.indexOf(a)>this.nodes.indexOf(b)||[...owners.get(a)].some(i=>owners.get(b).has(i)))continue;
+        if(Math.hypot(a.ox-b.ox,a.oy-b.oy)<this.radius*2.2)this.link(a,b);
+      }
+      this.update();
+    }
+    static strokeRadius(c,w,h){return c==='I'?Math.max(6,h*.14):Math.max(6,Math.min(w*.25,h*({E:.14,R:.14,'4':.1,'0':.11}[c]??.17)))}
+    link(a,b){this.links.push({a,b,length:Math.hypot(a.ox-b.ox,a.oy-b.oy)})}
+    update(){
+      let x=0,y=0,minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+      for(const n of this.nodes){x+=n.x;y+=n.y;minX=Math.min(minX,n.x-n.rx);maxX=Math.max(maxX,n.x+n.rx);minY=Math.min(minY,n.y-n.ry);maxY=Math.max(maxY,n.y+n.ry)}
+      this.cx=x/this.nodes.length;this.cy=y/this.nodes.length;this.bounds={minX,maxX,minY,maxY};
+    }
+    hitTest(p){return this.nodes.some(n=>((p.x-n.x)/n.rx)**2+((p.y-n.y)/n.ry)**2<=1.1)}
+  }
+  class World {
+    static floorInset=0; // px reserved below the floor (footer strip)
+    get floorY(){return this.height-World.floorInset}
+    constructor(width,height,glyphs){
+      this.width=width;this.height=height;this.glyphs=glyphs;this.nodes=glyphs.flatMap(g=>g.nodes);this.drag=null;this.energy=1;this.reducedMotion=false;
+      this.fitBase={scale:1,v:0};this.fitGoal=1;
+      this.redistActive=false;
+      this._meas={collMs:0,collPairs:0,collHits:0};this._measOn=false;
+      this.nodes.forEach((n,i)=>n.id=i);
+      this.neighbors=new Set();for(const g of glyphs)for(const a of g.nodes)for(const b of g.nodes)if(a.id<b.id&&Math.hypot(a.ox-b.ox,a.oy-b.oy)<g.radius*2.1)this.neighbors.add(a.id+':'+b.id);
+      for(const g of glyphs)for(const l of g.links)this.neighbors.add(Math.min(l.a.id,l.b.id)+':'+Math.max(l.a.id,l.b.id));
+      for(let i=0;i<25;i++)this.solve();for(const g of glyphs)g.update();this.sleep();
+    }
+    grab(g,p){const node=g.nodes.reduce((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)<Math.hypot(b.x-p.x,b.y-p.y)?a:b);this.drag={glyph:g,node,x:p.x,y:p.y,dx:node.x-p.x,dy:node.y-p.y}}
+    release(){this.drag=null}
+    sleep(){for(const n of this.nodes)n.vx=n.vy=0;this.energy=0}
+    resize(w,h){
+      if(!this.fitBase.w){this.fitBase.w=this.width;this.fitBase.h=this.height;}
+      if(this.width>0&&this.height>0){
+        let lMinX=Infinity,lMaxX=-Infinity,lMinY=Infinity,lMaxY=-Infinity;
+        for(const g of this.glyphs){lMinX=Math.min(lMinX,g.cx);lMaxX=Math.max(lMaxX,g.cx);lMinY=Math.min(lMinY,g.cy);lMaxY=Math.max(lMaxY,g.cy);}
+        const lW=lMaxX-lMinX,lH=lMaxY-lMinY,lCX=(lMinX+lMaxX)/2,lCY=(lMinY+lMaxY)/2;
+        const fh=h-World.floorInset;
+        const s=(lW>1&&lH>1)?Math.min(w*0.96/lW,fh*0.96/lH):1;
+        for(const g of this.glyphs){
+          if(g===this.drag?.glyph){g._rdx=0;g._rdy=0;}
+          else{g._rdx=(g.cx-lCX)*s+w/2-g.cx;g._rdy=(g.cy-lCY)*s+fh/2-g.cy;}
+        }
+        this.redistActive=true;
+      }
+      this.width=w;this.height=h;this.target={w,h};this.energy=1;
+    }
+    get busy(){return !!this.target||this.redistActive||this.glyphs.some(g=>g.puff)||this.returning>0}
+    followResize(){
+      if(!this.target)return;
+      const t=this.target,b=this.fitBase;
+      let goal=Math.sqrt(t.w*t.h/(b.w*b.h));if(goal<1)goal**=.75;
+      this.fitGoal=goal;
+      b.v+=((goal-b.scale)*30-b.v*8)/60;const k=(b.scale+b.v/60)/b.scale;b.scale+=b.v/60;
+      for(const g of this.glyphs)this.scaleGlyph(g,k);
+      if(Math.abs(goal-b.scale)<.0005&&Math.abs(b.v)<.0005)this.target=null;
+    }
+    followRedist(){
+      if(!this.redistActive)return;
+      let anyLeft=false;
+      for(const g of this.glyphs){
+        if(g===this.drag?.glyph){g._rdx=0;g._rdy=0;continue;}
+        if(g._rdx===undefined)continue;
+        if(Math.abs(g._rdx)>.25||Math.abs(g._rdy)>.25){
+          anyLeft=true;
+          const moveX=g._rdx*.06,moveY=g._rdy*.06;
+          for(const n of g.nodes){n.x+=moveX;n.y+=moveY}
+          g._rdx-=moveX;g._rdy-=moveY;
+          g.update();
+        }
+      }
+      if(!anyLeft){for(const g of this.glyphs){g._rdx=0;g._rdy=0;}this.redistActive=false;}
+    }
+    scaleGlyph(g,k){
+      g.update();g.w*=k;g.h*=k;g.radius*=k;
+      for(const n of g.nodes){n.ox*=k;n.oy*=k;n.rx*=k;n.ry*=k;n.x=g.cx+(n.x-g.cx)*k;n.y=g.cy+(n.y-g.cy)*k}
+      for(const l of g.links)l.length*=k;
+    }
+    solve(){
+      for(const g of this.glyphs){
+        for(const l of g.links){const dx=l.b.x-l.a.x,dy=l.b.y-l.a.y,d=Math.hypot(dx,dy)||1;
+          const rest=l.length,k=(d-rest)/d*.24;
+          l.a.x+=dx*k;l.a.y+=dy*k;l.b.x-=dx*k;l.b.y-=dy*k;
+        }
+        for(const path of g.paths){
+          const nodes=path.nodes,start=path.closed?0:1,end=path.closed?nodes.length:nodes.length-1;
+          for(let i=start;i<end;i++){
+            const n=nodes[i],a=nodes[(i-1+nodes.length)%nodes.length],b=nodes[(i+1)%nodes.length];
+            const dx=((a.x+b.x)/2-n.x+(n.ox-(a.ox+b.ox)/2))*.18;
+            const dy=((a.y+b.y)/2-n.y+(n.oy-(a.oy+b.oy)/2))*.18;
+            n.x+=dx;n.y+=dy;a.x-=dx/2;a.y-=dy/2;b.x-=dx/2;b.y-=dy/2;
+          }
+        }
+      }
+      const _doMeas=this._measOn;
+      const _ct0=_doMeas?performance.now():0;let _cp=0,_ch=0;
+      const cell=Math.max(16,...this.nodes.map(n=>Math.max(n.rx,n.ry)*2+3)),grid=new Map();
+      for(const a of this.nodes){
+        const gx=Math.floor(a.x/cell),gy=Math.floor(a.y/cell);
+        for(let x=gx-1;x<=gx+1;x++)for(let y=gy-1;y<=gy+1;y++)for(const b of grid.get(x+','+y)||[]){
+          if(a.body===b.body&&this.neighbors.has(b.id+':'+a.id))continue;
+          if(a.body!==b.body&&a.body._passes?.has(b.body))continue; // last resort: a stuck letter slips past
+          _cp++;
+          const dx=a.x-b.x,dy=a.y-b.y,d=Math.hypot(dx,dy)||.001,nx=dx/d,ny=dy/d;
+          const ra=Math.hypot(a.rx*nx,a.ry*ny),rb=Math.hypot(b.rx*nx,b.ry*ny),overlap=ra+rb+1.8-d;
+          if(overlap>0){const k=overlap*.5;a.x+=nx*k;a.y+=ny*k;b.x-=nx*k;b.y-=ny*k;_ch++;}
+        }
+        const key=gx+','+gy;if(!grid.has(key))grid.set(key,[]);grid.get(key).push(a);
+      }
+      if(_doMeas){this._meas.collMs+=performance.now()-_ct0;this._meas.collPairs+=_cp;this._meas.collHits+=_ch;}
+      for(const n of this.nodes){n.x=clamp(n.x,n.rx+3,this.width-n.rx-3);n.y=clamp(n.y,n.ry+3,this.floorY-n.ry-3)}
+    }
+    step(){
+      this.followResize();this.followRedist();
+      const old=this.nodes.map(n=>[n.x,n.y]);
+      for(const g of this.glyphs){
+        g.update();
+        const meanX=g.nodes.reduce((s,n)=>s+n.ox,0)/g.nodes.length,meanY=g.nodes.reduce((s,n)=>s+n.oy,0)/g.nodes.length;
+        for(const n of g.nodes){
+          const tx=g.cx+(n.ox-meanX),ty=g.cy+(n.oy-meanY);
+          n.vx+=(tx-n.x)*.024;n.vy+=(ty-n.y)*.024;
+        }
+      }
+      const move=this.nodes.map(n=>[n.vx,n.vy]);let held=null;
+      if(this.drag){const d=this.drag,n=d.node,mx=clamp(d.x+d.dx-n.x,-60,60),my=clamp(d.y+d.dy-n.y,-60,60);
+        for(const m of d.glyph.nodes){move[m.id][0]+=mx*.2;move[m.id][1]+=my*.2}
+        held={n,x0:n.x,y0:n.y,x:n.x+mx,y:n.y+my}}
+      let far=0,thin=Infinity;
+      for(const n of this.nodes)thin=Math.min(thin,n.rx,n.ry);
+      for(const [x,y] of move)far=Math.max(far,Math.hypot(x,y));
+      if(held)far=Math.max(far,Math.hypot(held.x-held.x0,held.y-held.y0));
+      const steps=clamp(Math.ceil(far/(thin*.5)),1,8),passes=Math.ceil(6/steps);
+      for(let s=1;s<=steps;s++){
+        this.nodes.forEach((n,i)=>{n.x+=move[i][0]/steps;n.y+=move[i][1]/steps});
+        for(let i=0;i<passes;i++){this.solve();if(held){const t=s/steps;
+          held.n.x=held.x0+(held.x-held.x0)*t;held.n.y=held.y0+(held.y-held.y0)*t;
+          held.n.x=clamp(held.n.x,held.n.rx+3,this.width-held.n.rx-3);
+          held.n.y=clamp(held.n.y,held.n.ry+3,this.floorY-held.n.ry-3);}}
+      }
+      let e=0;this.nodes.forEach((n,i)=>{n.vx=clamp((n.x-old[i][0])*(this.reducedMotion?.7:.94),-30,30);n.vy=clamp((n.y-old[i][1])*(this.reducedMotion?.7:.94),-30,30);e+=n.vx*n.vx+n.vy*n.vy});
+      this.energy=Math.sqrt(e/this.nodes.length);for(const g of this.glyphs)g.update();
+    }
+  }
+  window.ArtisType={Glyph,World};
+})();
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SVG PATH PARSER
+   ═══════════════════════════════════════════════════════════════════════════ */
+(() => {
+  'use strict';
+  function flattenSvgPath(d){
+    const out=[];let cx=0,cy=0,sx=0,sy=0;
+    const chunks=d.match(/[MmLlHhVvCcQqZz][^MmLlHhVvCcQqZz]*/g)||[];
+    const add=(x,y)=>out.push({x,y});
+    const cubicTo=(x0,y0,x1,y1,x2,y2,x3,y3)=>{
+      const n=Math.max(4,Math.ceil((Math.hypot(x1-x0,y1-y0)+Math.hypot(x2-x1,y2-y1)+Math.hypot(x3-x2,y3-y2))/6));
+      for(let k=1;k<=n;k++){const t=k/n,u=1-t;add(u*u*u*x0+3*u*u*t*x1+3*u*t*t*x2+t*t*t*x3,u*u*u*y0+3*u*u*t*y1+3*u*t*t*y2+t*t*t*y3)}
+    };
+    const quadTo=(x0,y0,x1,y1,x2,y2)=>{
+      const n=Math.max(3,Math.ceil(Math.hypot(x2-x0,y2-y0)/5));
+      for(let k=1;k<=n;k++){const t=k/n,u=1-t;add(u*u*x0+2*u*t*x1+t*t*x2,u*u*y0+2*u*t*y1+t*t*y2)}
+    };
+    for(const chunk of chunks){
+      const cmd=chunk[0];
+      const args=chunk.slice(1).trim().split(/[\s,]+/).filter(Boolean).map(Number);
+      let i=0;
+      const n=(k=1)=>{const r=[];for(let j=0;j<k;j++)r.push(args[i++]??0);return r};
+      switch(cmd){
+        case 'M':{const[x,y]=n(2);cx=x;cy=y;sx=x;sy=y;add(cx,cy);break}
+        case 'm':{const[dx,dy]=n(2);cx+=dx;cy+=dy;sx=cx;sy=cy;add(cx,cy);break}
+        case 'L':while(i<args.length){const[x,y]=n(2);cx=x;cy=y;add(cx,cy)}break;
+        case 'l':while(i<args.length){const[dx,dy]=n(2);cx+=dx;cy+=dy;add(cx,cy)}break;
+        case 'H':while(i<args.length){cx=args[i++];add(cx,cy)}break;
+        case 'h':while(i<args.length){cx+=args[i++];add(cx,cy)}break;
+        case 'V':while(i<args.length){cy=args[i++];add(cx,cy)}break;
+        case 'v':while(i<args.length){cy+=args[i++];add(cx,cy)}break;
+        case 'C':while(i<args.length){const[x1,y1,x2,y2,x3,y3]=n(6);cubicTo(cx,cy,x1,y1,x2,y2,x3,y3);cx=x3;cy=y3}break;
+        case 'c':while(i<args.length){const[dx1,dy1,dx2,dy2,dx3,dy3]=n(6);cubicTo(cx,cy,cx+dx1,cy+dy1,cx+dx2,cy+dy2,cx+dx3,cy+dy3);cx+=dx3;cy+=dy3}break;
+        case 'Q':while(i<args.length){const[x1,y1,x2,y2]=n(4);quadTo(cx,cy,x1,y1,x2,y2);cx=x2;cy=y2}break;
+        case 'q':while(i<args.length){const[dx1,dy1,dx2,dy2]=n(4);quadTo(cx,cy,cx+dx1,cy+dy1,cx+dx2,cy+dy2);cx+=dx2;cy+=dy2}break;
+        case 'Z':case 'z':add(sx,sy);break;
+      }
+    }
+    return out;
+  }
+  function resample(pts,count){
+    if(pts.length<2)return pts.slice(0,count+1);
+    const ds=[0];for(let i=1;i<pts.length;i++)ds.push(ds[i-1]+Math.hypot(pts[i].x-pts[i-1].x,pts[i].y-pts[i-1].y));
+    const total=ds.at(-1),out=[];
+    for(let k=0;k<=count;k++){
+      const t=total*k/count;let j=1;while(j<ds.length-1&&ds[j]<t)j++;
+      const u=(t-ds[j-1])/(ds[j]-ds[j-1]||1);
+      out.push({x:pts[j-1].x+(pts[j].x-pts[j-1].x)*u,y:pts[j-1].y+(pts[j].y-pts[j-1].y)*u});
+    }
+    return out;
+  }
+  async function loadSvgInfo(url){
+    const resp=await fetch(url);
+    if(!resp.ok)throw new Error(`${resp.status} ${url}`);
+    const doc=new DOMParser().parseFromString(await resp.text(),'image/svg+xml');
+    const raw=[];
+    for(const el of doc.querySelectorAll('path')){
+      const pts=flattenSvgPath(el.getAttribute('d')||'');
+      if(pts.length<2)continue;
+      raw.push({pts,closed:!!(el.getAttribute('d')||'').match(/[Zz]/)});
+    }
+    if(!raw.length)throw new Error(`No paths in ${url}`);
+    let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+    for(const{pts}of raw)for(const p of pts){
+      if(p.x<minX)minX=p.x;if(p.x>maxX)maxX=p.x;
+      if(p.y<minY)minY=p.y;if(p.y>maxY)maxY=p.y;
+    }
+    const cx=(minX+maxX)/2,cy=(minY+maxY)/2,rangeX=maxX-minX||1,rangeY=maxY-minY||1;
+    const scale=Math.min(.6/rangeX,.7/rangeY);
+    const normW=rangeX*scale,normH=rangeY*scale;
+    const norm=p=>({x:(p.x-cx)*scale,y:(p.y-cy)*scale});
+    const strokes=raw.map(({pts,closed})=>({
+      points:resample(pts.map(norm),Math.max(6,Math.ceil(pts.length*.45))),
+      closed
+    }));
+    return{strokes,normW,normH};
+  }
+  window.SvgLoader={loadSvgInfo};
+})();
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   APP — cc_v25
+   Changes vs cc_v24:
+   1. Viewport-aware target sizing: fitGoal now uses compBBox(pickComp(w,h)) so
+      the scale spring always targets the letter size appropriate for the CURRENT
+      window shape, not the composition chosen at initial load.
+   2. Live-bbox redistribution: World.resize() computes the current centroid bounding
+      box, then derives per-glyph _rdx/_rdy as the transform that fits that live
+      arrangement into 96% of the new viewport (scale + center). Replaces the
+      proportional cx*(sx-1) formula which left empty space in portrait/landscape
+      transitions.
+   3. Outstanding movement cancelled when letter is grabbed (zeroed in followRedist
+      for the dragged glyph so no drift after release).
+   ═══════════════════════════════════════════════════════════════════════════ */
+(() => {
+  'use strict';
+  const canvas  = document.querySelector('#letters');
+  const ctx     = canvas.getContext('2d');
+  const clamp   = (v,a,b) => Math.max(a, Math.min(b, v));
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+
+  let width=0, height=0, ratio=1;
+
+  /* ── SVG assets ──────────────────────────────────────────────────────── */
+  const ALL_SVGS = [
+    '../../letters/first name (prestin)/p.svg',
+    '../../letters/first name (prestin)/r.svg',
+    '../../letters/first name (prestin)/e.svg',
+    '../../letters/first name (prestin)/new S.svg',
+    '../../letters/first name (prestin)/t.svg',
+    '../../letters/first name (prestin)/i.svg',
+    '../../letters/first name (prestin)/n.svg',
+    '../../letters/last name (artis)/new A.svg',
+    '../../letters/last name (artis)/new R.svg',
+    '../../letters/last name (artis)/T.svg',
+    '../../letters/last name (artis)/i.svg',
+    '../../letters/last name (artis)/s.svg',
+  ];
+  const ALL_CHARS = ['P','R','E','S','T','I','N','A','R','T','I','S'];
+
+  /* ── Composition data ────────────────────────────────────────────────── */
+  // authored:true  → hand-authored in cc_v6 at refW×refH
+  // authored:false → auto-filled grid (fallback only)
+  //
+  // DIAGNOSTIC: 1 row (original) Y spread = 273.7px at ref 900 height
+  //   = 1.38× letter height — I(272)/T(283)/P(319)/T(331) cluster top band;
+  //   S(446)/E(453)/S(460)/R(469)/R(484)/N(546) cluster bottom band.
+  //   Reads as two overlapping bands, not one horizontal sequence.
+  //   SOURCE: authored cc_v6 data, NOT the fitting algorithm.
+  //
+  // DIAGNOSTIC: 2 rows — ARTIS row is 80.9% as wide as PRESTIN (L-margin
+  //   118px vs 15px, R-margin 158px vs 28px). 5 letters vs 7 letters.
+  //   SOURCE: authored data. Fitting algorithm preserves this correctly.
+  const COMPS = [
+    /* 0: 1 row — authored in cc_v6 editor at 1440×900, exported 2026-10-21 */
+    { name:'1 row', authored:true, refW:1440, refH:900, poses:[
+      {svgIdx:0,  char:'P', x:88.92,   y:428.9,  w:195.3229, angle:0},
+      {svgIdx:1,  char:'R', x:230.91,  y:450.5,  w:207.1854, angle:0},
+      {svgIdx:2,  char:'E', x:332.99,  y:464.64, w:180.792,  angle:0},
+      {svgIdx:3,  char:'S', x:456.4,   y:461.04, w:159.6714, angle:0},
+      {svgIdx:4,  char:'T', x:570.64,  y:411.02, w:191.2207, angle:0},
+      {svgIdx:5,  char:'I', x:668.59,  y:442.66, w:205.4602, angle:0},
+      {svgIdx:6,  char:'N', x:786.44,  y:453.99, w:190.1743, angle:0},
+      {svgIdx:7,  char:'A', x:938.08,  y:440.6,  w:173.197,  angle:0},
+      {svgIdx:8,  char:'R', x:1066.91, y:431.53, w:171.9009, angle:0},
+      {svgIdx:9,  char:'T', x:1191.86, y:396.66, w:167.389,  angle:0},
+      {svgIdx:10, char:'I', x:1274.64, y:437.41, w:170.5331, angle:0},
+      {svgIdx:11, char:'S', x:1356.4,  y:444.32, w:155.7025, angle:0},
+    ]},
+    /* 1: 2 rows (PRESTIN / ARTIS) — authored in cc_v6 editor at 1440×900, exported 2026-10-21 */
+    { name:'2 rows', authored:true, refW:1440, refH:900, poses:[
+      {svgIdx:0,  char:'P', x:109.55,  y:175.52, w:323.3725, angle:0},
+      {svgIdx:1,  char:'R', x:358.77,  y:209.36, w:345.4205, angle:0},
+      {svgIdx:2,  char:'E', x:530.49,  y:246.29, w:328.3478, angle:0},
+      {svgIdx:3,  char:'S', x:737.62,  y:228.85, w:300.0042, angle:0},
+      {svgIdx:4,  char:'T', x:956.58,  y:194.17, w:346.0041, angle:0},
+      {svgIdx:5,  char:'I', x:1125.08, y:232.86, w:364.8411, angle:0},
+      {svgIdx:6,  char:'N', x:1309.22, y:229.33, w:331.0483, angle:0},
+      {svgIdx:7,  char:'A', x:193.25,  y:626.96, w:420.333,  angle:0},
+      {svgIdx:8,  char:'R', x:505.31,  y:635.51, w:414.5009, angle:0},
+      {svgIdx:9,  char:'T', x:812.98,  y:602.56, w:414.5009, angle:0},
+      {svgIdx:10, char:'I', x:1071.53, y:642.09, w:414.5009, angle:0},
+      {svgIdx:11, char:'S', x:1298.35, y:657.07, w:414.5009, angle:0},
+    ]},
+    /* 2 (extra): 2 rows narrow — authored in cc_v6b editor at 1204×444, exported 2026-10-22 */
+    { name:'2 rows narrow', authored:true, refW:1204, refH:444, poses:[
+      {svgIdx:0,  char:'P', x:99.31,   y:121.77, w:309.1692, angle:0},
+      {svgIdx:1,  char:'R', x:296.41,  y:127.15, w:327.8785, angle:0},
+      {svgIdx:2,  char:'E', x:443.69,  y:136.3,  w:287.5591, angle:0},
+      {svgIdx:3,  char:'S', x:608.84,  y:132.83, w:231.5603, angle:0},
+      {svgIdx:4,  char:'T', x:770.7,   y:107.43, w:283.1285, angle:0},
+      {svgIdx:5,  char:'I', x:914.84,  y:132.65, w:298.5882, angle:0},
+      {svgIdx:6,  char:'N', x:1076.23, y:133.95, w:284.9694, angle:0},
+      {svgIdx:7,  char:'A', x:168.31,  y:335.89, w:211.4212, angle:0.054075},
+      {svgIdx:8,  char:'R', x:390.19,  y:337.24, w:206.1739, angle:0},
+      {svgIdx:9,  char:'T', x:541.37,  y:323.77, w:213.518,  angle:0},
+      {svgIdx:10, char:'I', x:712.04,  y:340.82, w:219.0871, angle:0},
+      {svgIdx:11, char:'S', x:869.49,  y:345.19, w:194.4138, angle:0},
+    ]},
+    /* 2: 3 rows (PRES / TIN / ARTIS) — authored in cc_v6 editor at 800×800, exported 2026-10-21 (updated) */
+    { name:'3 rows', authored:true, refW:800, refH:800, poses:[
+      {svgIdx:0,  char:'P', x:88.45,  y:139.53, w:271.0385, angle:0},
+      {svgIdx:1,  char:'R', x:289,    y:132.06, w:283.1197, angle:0},
+      {svgIdx:2,  char:'E', x:428.51, y:174.27, w:268.821,  angle:0},
+      {svgIdx:3,  char:'S', x:638.35, y:176.59, w:245.974,  angle:0},
+      {svgIdx:4,  char:'T', x:198.17, y:351.93, w:278.7283, angle:0},
+      {svgIdx:5,  char:'I', x:350.88, y:403.38, w:276.1927, angle:0},
+      {svgIdx:6,  char:'N', x:498.22, y:421.45, w:251.0892, angle:0},
+      {svgIdx:7,  char:'A', x:97.9,   y:612.65, w:227.9159, angle:0},
+      {svgIdx:8,  char:'R', x:264.5,  y:638.27, w:233.3355, angle:0},
+      {svgIdx:9,  char:'T', x:431.52, y:608.09, w:228.3235, angle:0},
+      {svgIdx:10, char:'I', x:588.18, y:643.09, w:270.3042, angle:0},
+      {svgIdx:11, char:'S', x:721.5,  y:591.96, w:243.1517, angle:0},
+    ]},
+    /* 3: 4 rows (PRES / TIN / AR / TIS) — authored in cc_v6 editor at 390×844, exported 2026-10-21 */
+    { name:'4 rows', authored:true, refW:390, refH:844, poses:[
+      {svgIdx:0,  char:'P', x:56.85,  y:115.43, w:159.0233, angle:0},
+      {svgIdx:1,  char:'R', x:165.36, y:116.98, w:170.1888, angle:0},
+      {svgIdx:2,  char:'E', x:246.98, y:126.29, w:163.2363, angle:0},
+      {svgIdx:3,  char:'S', x:338.12, y:123.58, w:153.0673, angle:0},
+      {svgIdx:4,  char:'T', x:94.68,  y:281.94, w:220.0967, angle:0},
+      {svgIdx:5,  char:'I', x:212.54, y:304.89, w:220.0967, angle:0},
+      {svgIdx:6,  char:'N', x:317.61, y:302.42, w:214.0817, angle:0},
+      {svgIdx:7,  char:'A', x:87.38,  y:490.66, w:219.7076, angle:0},
+      {svgIdx:8,  char:'R', x:286.16, y:509.44, w:265.5813, angle:0},
+      {svgIdx:9,  char:'T', x:87.32,  y:699.69, w:220.0967, angle:0},
+      {svgIdx:10, char:'I', x:207.72, y:720.39, w:220.0967, angle:0},
+      {svgIdx:11, char:'S', x:314.01, y:727.48, w:220.0967, angle:0},
+    ]},
+    /* 4: 6 rows — generated fallback */
+    { name:'6 rows', authored:false, rows:[[0,1],[2,3],[4,5],[6,7],[8,9],[10,11]] },
+  ];
+
+  const COLOR = '#E7006A';
+  // projectorgv7: the letters take each case study's colour (projects.json "color") and fade back
+  // to COLOR outside one. A list of colours alternates letter by letter in PRESTINARTIS order
+  // (svgIdx), whatever the layout. ink[svgIdx] is drawn now; a short loop of its own eases it
+  const hexRGB = h => [1,3,5].map(i => parseInt(h.slice(i,i+2),16));
+  const N_INK = 12;
+  let inkRGB = Array.from({ length: N_INK }, () => hexRGB(COLOR)), ink = inkRGB.map(() => COLOR), inkRaf = 0;
+  function setInk(color) {
+    let list = [].concat(color || []).filter(c => /^#[0-9a-f]{6}$/i.test(c)); // a project without a colour just stays pink
+    if (!list.length) list = [COLOR];
+    const from = inkRGB.map(c => c.slice());
+    const to = from.map((c, i) => hexRGB(list[i % list.length])), t0 = performance.now();
+    cancelAnimationFrame(inkRaf);
+    const tick = t => {
+      const k = Math.min(1, (t - t0) / 700), e = k * k * (3 - 2 * k);
+      inkRGB = from.map((c, j) => c.map((v, i) => v + (to[j][i] - v) * e));
+      ink = inkRGB.map(c => `rgb(${c.map(Math.round).join(',')})`);
+      draw();
+      inkRaf = k < 1 ? requestAnimationFrame(tick) : 0;
+    };
+    inkRaf = requestAnimationFrame(tick);
+  }
+  window.ArtisInk = setInk;
+
+  let world=null, ready=false, cachedInfos=null;
+  let raf=0, prevTime=0, accum=0, quietFrames=0;
+  let activePtr=null, topZ=0;
+  const rendered = new Map();
+  let renderDirty=true;
+  let currentComp = -1;
+  let fitBBox=null, refFitS=null;
+
+  const FIXED_DT=1000/60, MAX_DELTA=50, MAX_STEPS=3;
+  let _restoredThisCycle=false;
+
+  /* ── Mode B visual animation ─────────────────────────────────────────── */
+  let _mbAnim=null; // {startMs, glyphs:[{g, fromNodes, toNodes, cx, cy, deltaAngle}]}
+  let _animOnly=false; // true once physics sleeps but animation is still running
+  const MB_ANIM_MS=280;
+
+  function _mbSpring(t){
+    // Elastic ease-out: goes slightly past 1.0 then settles
+    if(t<=0)return 0;if(t>=1)return 1;
+    return Math.pow(2,-10*t)*Math.sin((t*10-.75)*(2*Math.PI/3))+1;
+  }
+
+  function cancelModeBAnim(){
+    if(!_mbAnim)return;
+    if(world)for(const n of world.nodes){n._animX=null;n._animY=null;}
+    _mbAnim=null;
+  }
+
+  function tickModeBAnim(){
+    if(!_mbAnim||!world)return;
+    const t=(performance.now()-_mbAnim.startMs)/MB_ANIM_MS;
+    if(t>=1){
+      for(const n of world.nodes){n._animX=null;n._animY=null;}
+      // Mark animated glyphs dirty so draw() rebuilds them at exact physics positions
+      for(const d of _mbAnim.glyphs) d.g._pathDirty=true;
+      _mbAnim=null;
+      return;
+    }
+    const s=_mbSpring(t);
+    for(const d of _mbAnim.glyphs){
+      const cx=d.cx,cy=d.cy;
+      const amp=Math.min(Math.abs(d.deltaAngle)*1.4,0.18);
+      const dir=d.deltaAngle>=0?1:-1;
+      const extraAngle=dir*amp*Math.exp(-5*t)*Math.sin(3.2*Math.PI*t);
+      const cosR=Math.cos(extraAngle),sinR=Math.sin(extraAngle);
+      for(let i=0;i<d.g.nodes.length;i++){
+        const n=d.g.nodes[i];
+        // Converge to live physics position, not frozen frame-38 snapshot
+        const px=d.fromNodes[i].x+(n.x-d.fromNodes[i].x)*s;
+        const py=d.fromNodes[i].y+(n.y-d.fromNodes[i].y)*s;
+        const dx=px-cx,dy=py-cy;
+        n._animX=cx+dx*cosR-dy*sinR;
+        n._animY=cy+dx*sinR+dy*cosR;
+      }
+      d.g._pathDirty=true; // per-glyph dirty: only rebuilt letters need new paths
+    }
+  }
+
+  /* ── Measurement instrumentation ──────────────────────────────────────── */
+  let _measOn=false;
+  let _mPrevTs=0,_mRawInterval=0,_mRawLag=0;
+  const _mSmooth={interval:0,lag:0};
+  let _mFpsFrames=0,_mFpsLast=0,_mFps=0;
+  let _simTime=0,_realStartTime=0;
+  let _loopFrame=0,_autoDownload=false;
+
+  class Meas {
+    constructor(){this._frames=[];this._fn=0;}
+    push(f){this._frames.push(f);}
+    clear(){this._frames=[];this._fn=0;}
+    toCSV(){
+      const keys=[
+        'frame','timestamp_ms','fps',
+        'physics_ms','render_ms','total_ms',
+        'raf_interval_ms','raf_lag_ms',
+        'coll_ms','coll_particles','coll_pairs','coll_hits',
+        'steps_per_frame','sim_time_ms','real_time_ms',
+        'dragging','energy','quiet_frames','sleep','mode_b',
+        'redist_active','fit_scale','fit_goal',
+        'vp_w','vp_h',
+        'L0_cx','L0_cy','L0_vmax','L0_rdx','L0_rdy',
+        'L1_cx','L1_cy','L1_vmax','L1_rdx','L1_rdy',
+        'L2_cx','L2_cy','L2_vmax','L2_rdx','L2_rdy',
+        'L3_cx','L3_cy','L3_vmax','L3_rdx','L3_rdy',
+        'L4_cx','L4_cy','L4_vmax','L4_rdx','L4_rdy',
+        'L5_cx','L5_cy','L5_vmax','L5_rdx','L5_rdy',
+        'L6_cx','L6_cy','L6_vmax','L6_rdx','L6_rdy',
+        'L7_cx','L7_cy','L7_vmax','L7_rdx','L7_rdy',
+        'L8_cx','L8_cy','L8_vmax','L8_rdx','L8_rdy',
+        'L9_cx','L9_cy','L9_vmax','L9_rdx','L9_rdy',
+        'L10_cx','L10_cy','L10_vmax','L10_rdx','L10_rdy',
+        'L11_cx','L11_cy','L11_vmax','L11_rdx','L11_rdy',
+      ];
+      const rows=[keys.join(',')];
+      for(const f of this._frames)rows.push(keys.map(k=>f[k]??'').join(','));
+      return rows.join('\n');
+    }
+    download(){
+      const blob=new Blob([this.toCSV()],{type:'text/csv'});
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+      a.download=`cc_v25-${Date.now()}.csv`;a.click();
+    }
+  }
+  const meas=new Meas();
+
+  class Replay {
+    constructor(){
+      this._rec=null;this._events=null;
+      this._replayIdx=0;this._replayFrameCount=0;
+      this.recording=false;this.replaying=false;
+      this._snap=null;
+    }
+    startRecord(){
+      this._rec=[];
+      if(world){
+        this._snap={
+          w:width,h:height,
+          fitScale:world.fitBase.scale,fitV:world.fitBase.v,fitGoal:world.fitGoal,
+          redistActive:world.redistActive,
+          target:world.target?{...world.target}:null,
+          nodes:world.nodes.map(n=>({x:n.x,y:n.y,vx:n.vx,vy:n.vy})),
+          rdx:world.glyphs.map(g=>g._rdx||0),
+          rdy:world.glyphs.map(g=>g._rdy||0),
+        };
+      }
+      this.recording=true;this.replaying=false;
+    }
+    stopRecord(){this._events=this._rec;this._rec=null;this.recording=false;}
+    recordEvent(type,x,y){if(this._rec&&!this.replaying)this._rec.push({type,x,y,f:_loopFrame});}
+    startReplayCore(){
+      if(!this._events||!this._events.length)return;
+      if(this._snap&&world&&world.nodes.length===this._snap.nodes.length){
+        this._snap.nodes.forEach((s,i)=>{world.nodes[i].x=s.x;world.nodes[i].y=s.y;world.nodes[i].vx=s.vx;world.nodes[i].vy=s.vy;});
+        world.glyphs.forEach((g,i)=>{g._rdx=this._snap.rdx[i]||0;g._rdy=this._snap.rdy[i]||0;g.update();});
+        world.redistActive=this._snap.redistActive;
+        world.target=this._snap.target?{...this._snap.target}:null;
+        world.fitBase.scale=this._snap.fitScale;world.fitBase.v=this._snap.fitV;
+        world.fitGoal=this._snap.fitGoal;
+        world.energy=1;
+        if(this._snap.w!==width||this._snap.h!==height){
+          width=this._snap.w;height=this._snap.h;
+          canvas.width=Math.round(width*ratio);canvas.height=Math.round(height*ratio);
+        }
+      }
+      this._replayIdx=0;this._replayFrameCount=-1;this.replaying=true;
+      quietFrames=0;_restoredThisCycle=false;
+    }
+    startReplay(){
+      if(!this._events||!this._events.length)return;
+      this.startReplayCore();
+      meas.clear();_measOn=true;_autoDownload=true;wake();
+    }
+    tick(){
+      if(!this.replaying)return;
+      this._replayFrameCount++;
+      const firstF=this._events[0].f;
+      while(this._replayIdx<this._events.length&&
+            this._events[this._replayIdx].f-firstF<=this._replayFrameCount){
+        const ev=this._events[this._replayIdx++];
+        if(ev.type==='down'){const g=hit({x:ev.x,y:ev.y});if(g){world?.grab(g,{x:ev.x,y:ev.y});g.z=++topZ;}}
+        else if(ev.type==='move'&&world?.drag){world.drag.x=clamp(ev.x,0,width);world.drag.y=clamp(ev.y,0,height);}
+        else if(ev.type==='up'){world?.release();}
+        else if(ev.type==='resize'){_replayResize(ev.x,ev.y);}
+      }
+      if(this._replayIdx>=this._events.length){this.replaying=false;world?.release();}
+    }
+  }
+  const replay=new Replay();
+
+  function _replayResize(w,h){
+    const nW=Math.max(40,w),nH=Math.max(40,h);
+    if(nW===width&&nH===height)return;
+    width=nW;height=nH;
+    canvas.width=Math.round(width*ratio);canvas.height=Math.round(height*ratio);
+    world.resize(width,height);
+    renderDirty=true;
+  }
+
+  /* ── Rotation-aware bbox of a composition ────────────────────────────── */
+  function compBBox(compIdx) {
+    const comp = COMPS[compIdx];
+    let poses;
+    if (comp.authored) {
+      poses = comp.poses;
+    } else {
+      const gen = computeGenerated(1440, 900, comp);
+      poses = gen.map(d => ({svgIdx:d.svgIdx, x:d.pose.x, y:d.pose.y, w:d.pose.w, angle:d.pose.angle}));
+    }
+    let minX=Infinity, maxX=-Infinity, minY=Infinity, maxY=-Infinity;
+    for (const p of poses) {
+      const info = cachedInfos[p.svgIdx];
+      const hw = info.normW * p.w / 2;
+      const hh = info.normH * p.w / 2;
+      const a  = p.angle || 0;
+      const ac = Math.abs(Math.cos(a)), as_ = Math.abs(Math.sin(a));
+      const rw = hw*ac + hh*as_, rh = hw*as_ + hh*ac;
+      minX=Math.min(minX,p.x-rw); maxX=Math.max(maxX,p.x+rw);
+      minY=Math.min(minY,p.y-rh); maxY=Math.max(maxY,p.y+rh);
+    }
+    return { minX,maxX,minY,maxY,
+      cx:(minX+maxX)/2, cy:(minY+maxY)/2,
+      w:maxX-minX, h:maxY-minY };
+  }
+
+  /* ── Scoring ─────────────────────────────────────────────────────────── */
+  function scoreComp(compIdx, vpW, vpH) {
+    const b = compBBox(compIdx);
+    const s = Math.min(vpW*0.96/b.w, vpH*0.96/b.h);
+    return (s*b.w/vpW) * (s*b.h/vpH);
+  }
+
+  function pickComp(vpW, vpH) {
+    let best=0, bestScore=-1;
+    for (let i=0; i<COMPS.length; i++) {
+      const score = scoreComp(i, vpW, vpH);
+      if (score > bestScore) { bestScore=score; best=i; }
+    }
+    return best;
+  }
+
+  /* ── Diagnostics — logged once after SVGs load ───────────────────────── */
+  function logDiagnostics() {
+    console.groupCollapsed('[cc_v12] diagnostics');
+
+    // Real normW/normH from loaded SVGs
+    console.log('Letter normW / normH (real values from SvgLoader):');
+    cachedInfos.forEach((info,i) => {
+      console.log(`  [${i}] ${ALL_CHARS[i]}  normW=${info.normW.toFixed(4)}  normH=${info.normH.toFixed(4)}`);
+    });
+
+    // 1-row Y spread (uses real normH)
+    const analyseYSpread = (compIdx) => {
+      const comp = COMPS[compIdx];
+      if (!comp.authored) return;
+      const ys = comp.poses.map(p=>p.y);
+      const yMin=Math.min(...ys), yMax=Math.max(...ys);
+      const center=(yMin+yMax)/2;
+      const spread=yMax-yMin;
+      const refH = comp.refH || 900;
+      // Avg visual letter height using actual normH
+      const avgH = comp.poses.reduce((s,p) => s + cachedInfos[p.svgIdx].normH * p.w, 0) / comp.poses.length;
+      console.log(`\n"${comp.name}" Y spread: ${spread.toFixed(1)}px  (${(spread/refH*100).toFixed(1)}% of ref ${refH}px height)`);
+      console.log(`  Avg visual letter height: ${avgH.toFixed(0)}px  →  spread ratio: ${(spread/avgH).toFixed(2)}× letter-height`);
+      if (spread/avgH > 1) console.warn('  ⚠ Spread > 1 letter-height: letters will form separate bands');
+      console.log('  Letters sorted by Y:');
+      [...comp.poses].sort((a,b)=>a.y-b.y).forEach(p => {
+        const dev=p.y-center;
+        console.log(`    ${p.char}  y=${p.y.toFixed(1)}  (${dev>=0?'+':''}${dev.toFixed(1)})`);
+      });
+    };
+    analyseYSpread(0); // 1 row original
+    analyseYSpread(1); // 1 row balanced
+
+    // 2-row per-row x coverage
+    const comp2 = COMPS[2];
+    console.log('\n"2 rows" row x-coverage (real normW):');
+    const rowSplit = [comp2.poses.slice(0,7), comp2.poses.slice(7)];
+    const rowLabels = ['Row 1 (PRESTIN)', 'Row 2 (ARTIS  )'];
+    rowSplit.forEach((row, ri) => {
+      let minX=Infinity, maxX=-Infinity;
+      row.forEach(p => {
+        const hw = cachedInfos[p.svgIdx].normW * p.w / 2;
+        minX=Math.min(minX,p.x-hw); maxX=Math.max(maxX,p.x+hw);
+      });
+      const span=maxX-minX;
+      console.log(`  ${rowLabels[ri]}: x ${minX.toFixed(0)}–${maxX.toFixed(0)}  span ${span.toFixed(0)}px  (${(span/comp2.refW*100).toFixed(1)}% of ref ${comp2.refW}px)`);
+    });
+
+    // Coverage scores at 5 test viewports
+    console.log('\nCoverage scores at test viewports:');
+    const tests=[[1440,900],[1920,1080],[1024,1024],[2560,720],[390,844]];
+    for (const [W,H] of tests) {
+      const scores = COMPS.map((c,i)=>scoreComp(i,W,H));
+      const bestIdx = scores.indexOf(Math.max(...scores));
+      const row = scores.map((s,i)=>`${COMPS[i].name}:${s.toFixed(3)}`).join('  ');
+      console.log(`  ${W}×${H}  →  "${COMPS[bestIdx].name}" (${scores[bestIdx].toFixed(3)})  |  ${row}`);
+    }
+
+    console.groupEnd();
+  }
+
+  /* ── Fit authored composition uniformly ─────────────────────────────── */
+  function fitAuthored(compIdx, vpW, vpH) {
+    const comp = COMPS[compIdx];
+    const bbox = compBBox(compIdx);
+    const s  = Math.min(vpW*0.96/bbox.w, vpH*0.96/bbox.h);
+    const tx = vpW/2 - bbox.cx*s;
+    const ty = vpH/2 - bbox.cy*s;
+    const wFill = Math.round(s*bbox.w/vpW*100);
+    const hFill = Math.round(s*bbox.h/vpH*100);
+    console.log(`[cc_v13] fitAuthored "${comp.name}" at ${vpW}×${vpH}: fill ${wFill}%W × ${hFill}%H (scale ${s.toFixed(4)})`);
+    return comp.poses.map(p => ({
+      char: p.char, svgIdx: p.svgIdx,
+      pose: { x:p.x*s+tx, y:p.y*s+ty, w:p.w*s, h:p.w*s, angle:p.angle },
+    }));
+  }
+
+  /* ── Generated composition: uniform-scale auto-fill ─────────────────── */
+  function computeGenerated(W, H, comp) {
+    const K      = comp.rows.length;
+    const padTop = H*0.06;
+    const bandH  = (H*0.88)/K;
+    const maxW   = W*0.94;
+    const allIdx = comp.rows.flat();
+    let scale = bandH / Math.max(...allIdx.map(li=>cachedInfos[li].normH));
+    for (const row of comp.rows) {
+      const rowNW = row.reduce((s,li)=>s+cachedInfos[li].normW,0);
+      if (rowNW*scale > maxW) scale=maxW/rowNW;
+    }
+    const out=[];
+    comp.rows.forEach((row,ri) => {
+      const cy = padTop+bandH*ri+bandH*0.5;
+      const widths = row.map(li=>cachedInfos[li].normW*scale);
+      const totalW = widths.reduce((s,w)=>s+w,0);
+      let x=(W-totalW)/2;
+      row.forEach((li,i) => {
+        out.push({char:ALL_CHARS[li], svgIdx:li,
+          pose:{x:x+widths[i]/2, y:cy, w:scale, h:scale, angle:0}});
+        x+=widths[i];
+      });
+    });
+    return out;
+  }
+
+  /* ── Resolve composition defs ────────────────────────────────────────── */
+  function getDefs(compIdx) {
+    const comp = COMPS[compIdx];
+    const fh = height - ArtisType.World.floorInset;
+    return comp.authored
+      ? fitAuthored(compIdx, width, fh)
+      : computeGenerated(width, fh, comp);
+  }
+
+  /* ── Build world ─────────────────────────────────────────────────────── */
+  function build(compIdx) {
+    if (!cachedInfos) return;
+    cancelAnimationFrame(raf); raf=0; prevTime=0; accum=0; intro.cancelHome();
+    ready=false; rendered.clear(); renderDirty=true;
+    quietFrames=0; _restoredThisCycle=false;
+
+    const defs   = getDefs(compIdx);
+    const glyphs = defs.map(({char,svgIdx,pose},i) => {
+      const g = new ArtisType.Glyph({char}, pose, i, cachedInfos[svgIdx].strokes);
+      g.z=i; g.svgIdx=svgIdx; return g;
+    });
+    world = new ArtisType.World(width, height, glyphs);
+    fitBBox = compBBox(compIdx);
+    refFitS = Math.min(width*0.96/fitBBox.w, height*0.96/fitBBox.h);
+    world.reducedMotion = reduced.matches;
+    ready=true; renderDirty=true;
+    if (intro.active) intro.attach();
+    draw(); wake();
+  }
+
+  /* ── Sleep-snap Mode B ───────────────────────────────────────────────── */
+  // Restores rest shape around each letter's current centroid — not original position.
+  function popDeformedGlyphs() {
+    if (!world) return;
+    for (const g of world.glyphs) {
+      if (g===world.drag?.glyph) continue;
+      const mx=g.nodes.reduce((s,n)=>s+n.ox,0)/g.nodes.length;
+      const my=g.nodes.reduce((s,n)=>s+n.oy,0)/g.nodes.length;
+      for (const n of g.nodes) {
+        n.x=g.cx+(n.ox-mx); n.y=g.cy+(n.oy-my);
+        n.vx=0; n.vy=0;
+      }
+      g.update();
+    }
+    renderDirty=true;
+  }
+
+  /* ── Diagnostics HUD ────────────────────────────────────────────────── */
+  function drawHUD(){
+    if(!world)return;
+    const last=meas._frames.length?meas._frames.at(-1):null;
+    ctx.save();
+    ctx.font='11px monospace';
+    ctx.fillStyle='rgba(0,0,0,0.65)';
+    ctx.fillText(
+      `FPS:${_mFps}  phys:${last?last.physics_ms:0}ms  rend:${last?last.render_ms:0}ms  total:${last?last.total_ms:0}ms`,
+      10,18
+    );
+    ctx.fillText(
+      `raf: interval:${_mSmooth.interval.toFixed(1)}ms  lag:${_mSmooth.lag.toFixed(1)}ms`,
+      10,32
+    );
+    ctx.fillText(
+      `coll:${last?last.coll_ms:0}ms  pairs:${last?last.coll_pairs:0}  hits:${last?last.coll_hits:0}  particles:${world.nodes.length}`,
+      10,46
+    );
+    ctx.fillText(
+      `energy:${world.energy.toFixed(4)}  quiet:${quietFrames}/40  redist:${world.redistActive?'YES':'no'}  scale:${world.fitBase.scale.toFixed(3)}→${world.fitGoal.toFixed(3)}`,
+      10,60
+    );
+    ctx.fillText(
+      `steps/f:${last?last.steps_per_frame:0}  sim:${(_simTime/1000).toFixed(1)}s  drag:${world.drag?'YES':'no'}  rec:${replay.recording?'REC':'no'}  rep:${replay.replaying?'PLAY':'no'}  anim:${_mbAnim?((performance.now()-_mbAnim.startMs)/MB_ANIM_MS*100).toFixed(0)+'%':'--'}  [M]hide [C]csv`,
+      10,74
+    );
+    ctx.restore();
+  }
+
+  /* ── Physics loop (cc_v4-timing accumulator) ─────────────────────────── */
+  function frame(time) {
+    raf=0;
+    _loopFrame++;
+    replay.tick();
+    const cbStart=performance.now();
+    _mRawLag=cbStart-time;
+    _mRawInterval=_mPrevTs>0?time-_mPrevTs:0;
+    _mPrevTs=time;
+    const EMA=0.1;
+    if(_mRawInterval>0)_mSmooth.interval+=EMA*(_mRawInterval-_mSmooth.interval);
+    _mSmooth.lag+=EMA*(_mRawLag-_mSmooth.lag);
+    _mFpsFrames++;
+    if(time-_mFpsLast>=1000){_mFps=_mFpsFrames;_mFpsFrames=0;_mFpsLast=time;}
+    if (document.hidden||!world||!ready) { prevTime=0; return; }
+    if(prevTime===0){_simTime=0;_realStartTime=time;}
+    const rawDelta=prevTime>0 ? time-prevTime : FIXED_DT;
+    if(!_animOnly)accum+=Math.min(rawDelta,MAX_DELTA);
+    prevTime=time;
+    world._measOn=_measOn;
+    world._meas.collMs=world._meas.collPairs=world._meas.collHits=0;
+    const physStart=performance.now();
+    let steps=0;
+    if(!_animOnly){while (accum>=FIXED_DT && steps<MAX_STEPS) { intro.homeStep(); stage.step(); guard.step(); world.step(); renderDirty=true; accum-=FIXED_DT; steps++; _simTime+=FIXED_DT; }}
+    const physMs=performance.now()-physStart;
+    const realElapsed=time-_realStartTime;
+    const rendStart=performance.now();
+    tickModeBAnim();
+    draw();
+    const rendMs=performance.now()-rendStart;
+    const totalMs=performance.now()-cbStart;
+    // Update quiet state before recording so CSV reflects this frame's final values
+    const quiet=!world.drag&&!world.busy&&world.energy<.08;
+    quietFrames=quiet?quietFrames+1:0;
+    let _modeB=0;
+    if (!_restoredThisCycle&&quietFrames===38) {
+      // Capture deformed state before physics snap
+      const glyphData=world.glyphs.filter(g=>g!==world.drag?.glyph).map(g=>({
+        g, cx:g.cx, cy:g.cy, fromNodes:g.nodes.map(n=>({x:n.x,y:n.y})),
+      }));
+      popDeformedGlyphs();
+      _restoredThisCycle=true; _modeB=1;
+      // Capture restored state and compute rotation delta
+      for(const d of glyphData){
+        d.toNodes=d.g.nodes.map(n=>({x:n.x,y:n.y}));
+        let cross=0,dot=0;
+        for(let i=0;i<d.g.nodes.length;i++){
+          const fx=d.fromNodes[i].x-d.cx,fy=d.fromNodes[i].y-d.cy;
+          const tx=d.toNodes[i].x-d.cx,ty=d.toNodes[i].y-d.cy;
+          const mag=Math.hypot(fx,fy)*Math.hypot(tx,ty)||.001;
+          cross+=(fx*ty-fy*tx)/mag; dot+=(fx*tx+fy*ty)/mag;
+        }
+        d.deltaAngle=Math.atan2(cross,dot);
+      }
+      _mbAnim={startMs:performance.now(),glyphs:glyphData};
+    }
+    if(_measOn){
+      const glf={};
+      world.glyphs.forEach((g,i)=>{
+        let vmax=0;for(const n of g.nodes){const s=n.vx*n.vx+n.vy*n.vy;if(s>vmax)vmax=s;}
+        glf[`L${i}_cx`]=+g.cx.toFixed(1);glf[`L${i}_cy`]=+g.cy.toFixed(1);
+        glf[`L${i}_vmax`]=+Math.sqrt(vmax).toFixed(3);
+        glf[`L${i}_rdx`]=+(g._rdx||0).toFixed(3);glf[`L${i}_rdy`]=+(g._rdy||0).toFixed(3);
+      });
+      meas.push({
+        frame:meas._fn++,timestamp_ms:+time.toFixed(0),fps:_mFps,
+        physics_ms:+physMs.toFixed(2),render_ms:+rendMs.toFixed(2),total_ms:+totalMs.toFixed(2),
+        raf_interval_ms:+_mRawInterval.toFixed(2),raf_lag_ms:+_mRawLag.toFixed(2),
+        coll_ms:+(world._meas.collMs).toFixed(2),
+        coll_particles:world.nodes.length,
+        coll_pairs:world._meas.collPairs,coll_hits:world._meas.collHits,
+        steps_per_frame:steps,sim_time_ms:+_simTime.toFixed(0),real_time_ms:+realElapsed.toFixed(0),
+        dragging:world.drag?1:0,energy:+world.energy.toFixed(4),
+        quiet_frames:quietFrames,sleep:quietFrames>=40?1:0,mode_b:_modeB,
+        redist_active:world.redistActive?1:0,
+        fit_scale:+world.fitBase.scale.toFixed(4),fit_goal:+world.fitGoal.toFixed(4),
+        vp_w:width,vp_h:height,
+        ...glf,
+      });
+    }
+    // Physics sleeps at frame 40 unconditionally
+    if (quietFrames>=40&&!_animOnly) {
+      world.sleep(); prevTime=0; accum=0; _animOnly=true;
+      if(_autoDownload){_autoDownload=false;meas.download();}
+    }
+    // RAF continues only while physics active or visual animation running
+    if (quietFrames<40||_mbAnim) raf=requestAnimationFrame(frame);
+  }
+
+  function wake() {
+    if (intro.active) return; // world is held until the bubble intro hands off
+    cancelModeBAnim();
+    if(_animOnly) accum=0;
+    _animOnly=false;
+    quietFrames=0; _restoredThisCycle=false;
+    if (!raf&&!document.hidden) { prevTime=0; raf=requestAnimationFrame(frame); }
+  }
+
+  /* ── Rendering ───────────────────────────────────────────────────────── */
+  function prepareLetter(glyph) {
+    const rx=glyph.nodes[0].rx/glyph.radius, ry=glyph.nodes[0].ry/glyph.radius;
+    const paths=glyph.paths.map(stroke=>{
+      const nodes=stroke.nodes, count=nodes.length, path=new Path2D();
+      const ax=n=>n._animX??n.x, ay=n=>n._animY??n.y;
+      const at=n=>[ax(n)/rx,ay(n)/ry], mid=(a,b)=>[(ax(a)+ax(b))/2/rx,(ay(a)+ay(b))/2/ry];
+      let last=null;
+      const to=(x,y)=>{if(!last)path.moveTo(x,y);else if(Math.hypot(x-last[0],y-last[1])<.05)return;else path.lineTo(x,y);last=[x,y]};
+      const curve=(p0,c,p1)=>{
+        const ax=c[0]-p0[0],ay=c[1]-p0[1],bx=p1[0]-c[0],by=p1[1]-c[1];
+        const pieces=clamp(Math.ceil(Math.abs(Math.atan2(ax*by-ay*bx,ax*bx+ay*by))/.1),1,24);
+        for(let k=1;k<=pieces;k++){const t=k/pieces,u=1-t;to(u*u*p0[0]+2*u*t*c[0]+t*t*p1[0],u*u*p0[1]+2*u*t*c[1]+t*t*p1[1])}
+      };
+      if(stroke.closed){
+        let start=mid(nodes.at(-1),nodes[0]);to(...start);
+        for(let i=0;i<count;i++){const end=mid(nodes[i],nodes[(i+1)%count]);curve(start,at(nodes[i]),end);start=end}
+        path.closePath();
+      } else {
+        let start=at(nodes[0]);to(...start);
+        for(let i=1;i<count-1;i++){const end=mid(nodes[i],nodes[i+1]);curve(start,at(nodes[i]),end);start=end}
+        if(count>1)to(...at(nodes.at(-1)));
+        if(count===1)path.lineTo(...start);
+      }
+      return path;
+    });
+    return {paths,rx,ry};
+  }
+
+  function drawSolid(glyph, drawing) {
+    const halo=Math.max(1.5,Math.min(4.5,Math.min(width,height)*.0035));
+    ctx.save(); ctx.scale(drawing.rx,drawing.ry); ctx.lineCap='round'; ctx.lineJoin='round';
+    const band=halo*2/Math.sqrt(drawing.rx*drawing.ry);
+    ctx.strokeStyle='rgba(255,255,255,0.97)'; ctx.lineWidth=glyph.radius*2+band;
+    for(const p of drawing.paths)ctx.stroke(p);
+    ctx.strokeStyle=ink[glyph.svgIdx]??COLOR; ctx.lineWidth=glyph.radius*2;
+    for(const p of drawing.paths)ctx.stroke(p);
+    ctx.restore();
+  }
+
+  function draw() {
+    if (!world||!ready||intro.active) return;
+    ctx.setTransform(ratio,0,0,ratio,0,0);
+    ctx.fillStyle='#fff';
+    ctx.fillRect(0,0,width,height);
+    const sorted=[...world.glyphs].sort((a,b)=>(a.z||0)-(b.z||0));
+    for (const g of sorted) {
+      if (renderDirty||g._pathDirty||!rendered.has(g.index)) {
+        rendered.set(g.index, prepareLetter(g));
+        g._pathDirty=false;
+      }
+      drawSolid(g, rendered.get(g.index));
+    }
+    stage.drawOver(ctx);
+    if(_measOn)drawHUD();
+    renderDirty=false;
+  }
+
+  /* ── Projects masthead (projectorgv5) ─────────────────────────────────── */
+  // Opening Projects lifts the list from the bottom, and the list's top edge rides the letters'
+  // floor: it's the list that shoves them up into the band above, where they steer into the
+  // site's one-row layout for that sliver. Steering is projectorgv1's: it pushes on velocity,
+  // so letters keep real momentum, overshoot, bump and squish. Closing always flies to a fresh
+  // homepage layout for the current window, never back to where they were before.
+  // Nothing passes through anything, except as the burst's last resort (below). Letters that must swap places squeeze (projectorgv3's
+  // pick): a letter blocked for ~0.5 s by one ahead of it shrinks, slips through the gap, and
+  // springs back to size once it's past. Opening and closing go by makeway's lanes, so most
+  // never meet: opening, the lower rows first slide sideways under the top row, then rise into
+  // the space it has cleared; closing, the lower rows first drop out of the band, then slide
+  // into place, while the top row waits a beat before spreading out. Bursting out of the intro
+  // bubble is all at once (a jumbled cluster has no rows to take turns), so squeezing is what
+  // untangles it: everyone flies at BSQ. A burst letter still stuck after that gets
+  // projectorgv3's last resort: it slips past whatever it's touching until it's home.
+  const stage = (() => {
+    const SQ=.55, STUCK=30, COOL=30; // squeeze scale; steps without getting closer before squeezing; steps before squeezing again
+    const BSQ=.75, LAST=90; // the burst's squeeze: gentler, since the last resort catches what it can't fit; steps stuck (1.5 s) before the last resort
+    let open=false, fly=[], engaged=false;
+    let footer=0, floor=null, floorGoal=null, band=0, popRing=null;
+    // projectorgv7: inside a case study the band is compact, closer to malaikafrancique.com's slim
+    // masthead; the list gets the full band. Only the band's height changes: the letters fly to the
+    // smaller (or larger) formation the way they fly into the band. reband: waiting for a burst to land
+    let compact=false, reband=false;
+    const COMPACT=.55, COMPACT_TALL=.75; // share of the full band (an upright phone's row is already small)
+    const projEl=document.getElementById('projects'), listEl=projEl.querySelector('.sheet');
+    const WAIT=24; // closing: steps the top row waits for the lower rows to drop (0.4 s)
+
+    // The site's own layout for a w×h space: the same pick the homepage makes for the window
+    function defsFor(w,h){
+      const i=pickComp(w,h);
+      return COMPS[i].authored?fitAuthored(i,w,h):computeGenerated(w,h,COMPS[i]);
+    }
+    // The homepage formation for the current window
+    function homeLayout(){
+      const by=new Map(defsFor(width,height-footer).map(d=>[d.svgIdx,d.pose]));
+      Object.assign(world.fitBase,{w:width,h:height,scale:1,v:0});world.target=null; // later resizes scale from here
+      return world.glyphs.map(g=>{const p=by.get(g.svgIdx);return p?{g,x:p.x,y:p.y,w:p.w}:{g}});
+    }
+    // Never wait on the intro: pop its bubble (or stop its post-pop homing) and take the letters now.
+    // Returns true when it popped the bubble: the letters burst out of a jumbled cluster.
+    function takeOver(){
+      const h=intro.active?intro.popNow():intro.releaseHome();
+      if(h?.ring)popRing={...h.ring,a:1};
+      return !!h?.ring;
+    }
+    // Row index (top row 0) for each y: a new row starts more than ~half a letter below the last
+    function rowsOf(ys,hs){
+      const gap=[...hs].sort((a,b)=>a-b)[hs.length>>1]*.6;
+      const order=ys.map((y,i)=>i).sort((a,b)=>ys[a]-ys[b]),rows=[];let r=0;
+      order.forEach((i,k)=>{if(k&&ys[i]-ys[order[k-1]]>gap)r++;rows[i]=r});
+      return rows;
+    }
+
+    // Targets: {g, x, y, w}. Omit x/y to only rescale; w is the goal glyph width.
+    // lanes: opening, rows below the top slide sideways first ('x' leg), then rise;
+    // closing, letters bound for the lower rows drop first ('y' leg) and the top row waits.
+    // No lanes (the burst): everyone at once, squeezed from the start (see stepFly).
+    // burst: squeezed to BSQ, with the last resort for a letter that still can't get home.
+    function flyTo(list,{lanes=null,squeezed=false,burst=false}={}){
+      const rows=lanes?rowsOf(lanes.ys,lanes.hs):null;
+      fly=list.map((t,i)=>{
+        const prev=fly.find(f=>f.g===t.g),steer=t.x!=null,lower=rows&&rows[i]>0;
+        return {g:t.g,tx:t.x,ty:t.y,steer,s:1,sv:prev?prev.sv:0,goal:t.w?t.w/t.g.w:1,
+          steps:0,fade:0,sq:(squeezed||burst)&&steer?1:0,burst:burst&&steer,slip:false,cool:0,fin:t.w?t.w/t.g.w:1,best:Infinity,since:0,
+          leg:lower?(lanes.closing?'y':'x'):null,wait:rows&&lanes.closing&&!lower?WAIT:0};
+      });
+      for(const f of fly)if(f.sq){f.sqb=null;f.goal=f.fin*(f.burst?BSQ:SQ)}
+    }
+    function toBand(burst){
+      // an upright phone always gets the one-row layout, and the band is only as tall as that
+      // row needs plus some air; otherwise the site's own pick for a sliver
+      const tall=width<height,b=compBBox(0);
+      band=Math.round(tall?clamp(b.h*width*.96/b.w*1.3,80,height*.3):clamp(height*.16,100,200));
+      if(compact)band=Math.round(band*(tall?COMPACT_TALL:COMPACT));
+      floorGoal=height-band;
+      projEl.style.setProperty('--sheet-top',band+'px');
+      const cx=width/2,cy=band/2,by=new Map((tall?fitAuthored(0,width,band):defsFor(width,band)).map(d=>[d.svgIdx,d.pose]));
+      const list=world.glyphs.map(g=>{const p=by.get(g.svgIdx);
+        return p?{g,x:cx+(p.x-cx)*.9,y:cy+(p.y-cy)*.9,w:p.w*.9}:{g}});
+      // the burst is all at once, as projectorgv1's pop; otherwise rows leave top first
+      flyTo(list,burst?{burst:true}:{lanes:{ys:world.glyphs.map(g=>g.cy),hs:world.glyphs.map(g=>g.h)}});
+    }
+
+    const touching=(a,b)=>{const p=a.bounds,q=b.bounds;return p.minX<q.maxX&&p.maxX>q.minX&&p.minY<q.maxY&&p.maxY>q.minY};
+    // The letter touching f's glyph that's furthest along its way to its spot, if any
+    function blockerOf(f){
+      const g=f.g,ux=f.tx-g.cx,uy=f.ty-g.cy;let best=null,bd=0;
+      for(const o of world.glyphs){if(o===g||!touching(g,o))continue;
+        const d=(o.cx-g.cx)*ux+(o.cy-g.cy)*uy;if(d>bd){bd=d;best=o}}
+      return best;
+    }
+    function unsqueeze(f){if(f.sq){f.sq=0;f.goal=f.fin;f.cool=COOL;f.since=0;f.best=Infinity}}
+    // Collision exemptions for the last resort (projectorgv3's): a slipping letter passes whatever
+    // it's touching; a pair already slipping keeps slipping until clear, so contact doesn't snap
+    // back mid-overlap. With nobody slipping, every pair collides.
+    function updatePasses(){
+      const prev=new Map(world.glyphs.map(g=>[g,g._passes]));
+      for(const g of world.glyphs)g._passes=null;
+      // at rest every pair collides (projectorgv3's rule): a pair left overlapping pushes apart
+      // instead of staying ghosted together, and nothing carries over into the next flight
+      if(!fly.some(f=>f.steer))return;
+      const link=(a,b)=>{(a._passes??=new Set()).add(b);(b._passes??=new Set()).add(a)};
+      for(const f of fly)if(f.slip)for(const g of world.glyphs)if(g!==f.g&&touching(f.g,g))link(f.g,g);
+      for(const [a,set] of prev)if(set)for(const b of set)if(touching(a,b))link(a,b);
+    }
+    function stepFly(){
+      let active=0;
+      for(const f of fly){
+        const g=f.g;let live=false;
+        if(f.steer&&world.drag?.glyph===g){f.steer=false;f.slip=false;unsqueeze(f)}
+        // closing: holding until the row ahead clears. Shrinking goes ahead (it makes room);
+        // growing waits, so a held letter doesn't swell into the row that's leaving
+        const held=f.steer&&f.wait>0;
+        if(held){f.wait--;live=true}
+        if(f.goal!==null&&!(held&&f.goal>1)){ // sway-b scale spring: swells past the goal, then jiggles back
+          f.sv+=(f.goal-f.s)*.05-f.sv*.18;let next=Math.max(.05,f.s+f.sv);
+          if(Math.abs(f.goal-next)<.001&&Math.abs(f.sv)<.0005){next=f.goal;f.goal=null}
+          world.scaleGlyph(g,next/f.s);f.s=next;live=true;
+        }
+        if(f.steer&&!held){ // projectorgv1 steering: light brake, so letters overshoot and sway in
+          f.steps++;
+          let vx=0,vy=0;for(const n of g.nodes){vx+=n.vx;vy+=n.vy}vx/=g.nodes.length;vy/=g.nodes.length;
+          // lane: steer one axis only until that leg is done (the other is left to physics)
+          if(f.leg==='x'&&(Math.abs(f.tx-g.cx)<g.w*.15||f.steps>150))f.leg=null;
+          if(f.leg==='y'&&(Math.abs(f.ty-g.cy)<g.h*.25||f.steps>150))f.leg=null;
+          const sp=Math.hypot(vx,vy),dist=Math.hypot(f.tx-g.cx,f.ty-g.cy);
+          // squeeze: blocked short of its spot by a letter ahead of it. A pinned letter still
+          // jiggles as it pushes, so 'blocked' is no progress toward its spot, not no motion
+          if(f.cool>0)f.cool--;
+          if(dist<f.best-2){f.best=dist;f.since=0}else f.since++;
+          if(!f.fade&&f.since>(f.burst?LAST:STUCK)&&dist>g.radius*2&&(f.burst?!f.slip:!f.sq&&!f.cool)){
+            if(f.burst)f.slip=true; // squeezing wasn't enough: last resort
+            else{const b=blockerOf(f);if(b){f.sq=1;f.sqb=b;f.goal=f.fin*SQ;f.leg=null}}
+            f.since=0;f.best=Infinity;
+          }
+          if(f.slip&&dist<4)f.slip=false;
+          // back to size once the letter it squeezed past is no longer ahead of it (or it's home).
+          // Out of the burst there's no one letter to get past (projectorgv1 let crossing paths
+          // pass through): it flies small the whole way and swells back once it's nearly home
+          if(f.sq&&f.sqb){const b=f.sqb,ahead=touching(g,b)&&(b.cx-g.cx)*(f.tx-g.cx)+(b.cy-g.cy)*(f.ty-g.cy)>0;
+            if(!ahead||dist<g.radius*2||++f.sq>240)unsqueeze(f)}
+          else if(f.sq&&(dist<g.w/f.s*f.fin*.5||++f.sq>300))unsqueeze(f);
+          const dx=f.leg==='y'?0:f.tx-g.cx,dy=f.leg==='x'?0:f.ty-g.cy;
+          // let go on arrival, once it's nearly there and has gone still for 0.5 s (a neighbour can
+          // pin it a few px short; holding it till the 6 s give-up made the row 'sigh' on release),
+          // or after 6 s of trying
+          f.calm=sp<.3?(f.calm||0)+1:0;
+          const arrived=(dist<4&&sp<.5)||(f.calm>30&&dist<g.w*.3);
+          if(!f.fade&&(arrived||f.steps>360))f.fade=f.steps;
+          const w=Math.min(1,f.steps/8)*(f.fade?1-Math.min(1,(f.steps-f.fade)/18):1);
+          if(w<=0){f.steer=false;f.slip=false;unsqueeze(f)}
+          else{
+            let ax=(dx*.012-vx*.05)*w,ay=(dy*.012-vy*.05)*w;const am=Math.hypot(ax,ay);if(am>2.5){ax*=2.5/am;ay*=2.5/am}
+            for(const n of g.nodes){n.vx+=ax;n.vy+=ay}
+            live=true;
+          }
+        }
+        if(live)active++;
+      }
+      fly=fly.filter(f=>f.steer||f.goal!==null);
+      return active;
+    }
+
+    // The list's top edge rides the floor and never rises above it, so the list shoves the
+    // letters up and never covers them. f: how far the floor has risen from the footer to the band.
+    function placeList(){
+      if(floorGoal==null&&floor===footer){listEl.style.transform='';return}
+      const top=height-band,f=top>footer?clamp((floor-footer)/(top-footer),0,1):1;
+      listEl.style.transform=`translateY(${(1-f)*(height-band)}px)`;
+    }
+    function step(){
+      // the floor glides with the list (capped, so letters get shoved, not teleported)
+      const fg=floorGoal??footer;
+      if(floor===null)floor=fg;else floor+=clamp((fg-floor)*.1,-18,18);
+      if(Math.abs(fg-floor)<.5)floor=fg;
+      ArtisType.World.floorInset=floor;
+      placeList();
+      if(popRing){popRing.r+=10;popRing.a-=.08;if(popRing.a<=0)popRing=null}
+      if(reband&&!fly.some(f=>f.burst&&f.steer)){reband=false;if(open)toBand(false)}
+      const active=stepFly();
+      updatePasses();
+      // world.busy honours `returning`: keep the loop awake while the stage is moving
+      if(active||popRing||floor!==fg){world.returning=active+1;engaged=true}
+      else if(engaged){world.returning=0;engaged=false}
+    }
+
+    function rim(c,x,y,r,alpha){
+      if(r<1||alpha<=0)return;
+      c.save();c.globalAlpha=Math.min(1,alpha);
+      if(c.createConicGradient){const g=c.createConicGradient(0,x,y);
+        [['#a9b8ff',0],['#d9a6ff',.25],['#ff9fc4',.45],['#ffd59a',.62],['#a8e6cf',.8],['#a9b8ff',1]].forEach(([col,o])=>g.addColorStop(o,col));
+        c.strokeStyle=g}else c.strokeStyle='#cbb8ff';
+      c.lineWidth=2;c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.stroke();
+      c.strokeStyle='rgba(255,255,255,.9)';c.lineWidth=1;c.beginPath();c.arc(x,y,Math.max(1,r-2),0,Math.PI*2);c.stroke();
+      c.restore();
+    }
+    function drawOver(c){if(popRing)rim(c,popRing.x,popRing.y,popRing.r,popRing.a)}
+
+    return {
+      step,drawOver,
+      isOpen:()=>open,
+      flying:()=>fly.some(f=>f.steer),
+      wobble(){ // the hidden About page's hello: every letter hops, alternately up and down
+        if(!world)return;
+        world.glyphs.forEach((g,i)=>{const k=(i%2?1:-1)*(5+(i*37)%4);for(const n of g.nodes)n.vy+=k});
+        wake();
+      },
+      swap(a,b){ // two letters trade places: squeezed, one over and one under, so they never pass through
+        if(!world)return;
+        takeOver();
+        flyTo([{g:a,x:b.cx,y:b.cy,w:a.w},{g:b,x:a.cx,y:a.cy,w:b.w}],{squeezed:true});
+        for(const [g,k] of [[a,-1],[b,1]])for(const n of g.nodes)n.vy+=7*k;
+        wake();
+      },
+      shuffle(gs){ // several letters trade places at once, every one to another's spot (the word guard)
+        if(!world)return;
+        takeOver();
+        const at=gs.map(g=>({x:g.cx,y:g.cy}));
+        let p;do{p=gs.map((g,i)=>i).sort(()=>Math.random()-.5)}while(p.some((j,i)=>j===i));
+        flyTo(gs.map((g,i)=>({g,x:at[p[i]].x,y:at[p[i]].y,w:g.w})),{squeezed:true});
+        gs.forEach((g,i)=>{for(const n of g.nodes)n.vy+=7*(i%2?1:-1)}); // alternate over and under
+        wake();
+      },
+      _fly:()=>fly, // test probe
+      setFooter(fi){footer=fi;if(floorGoal==null){floor=fi;ArtisType.World.floorInset=fi}},
+      open(){
+        if(!world||open)return;
+        const burst=takeOver(); // pops the intro bubble if it's still up: one motion, no waiting
+        toBand(burst);open=true;
+        placeList(); // before the browser paints the sheet at its CSS "open" spot
+        wake();
+      },
+      close(){
+        if(!open)return;
+        open=false;floorGoal=null;
+        const list=homeLayout();
+        flyTo(list,{lanes:{closing:true,ys:list.map(t=>t.y??t.g.cy),hs:list.map(t=>t.g.h*(t.w?t.w/t.g.w:1))}});
+        wake();
+      },
+      setCompact(on){ // a case study (true) or the list (false); before open() it sets the opening size
+        if(compact===on)return;
+        compact=on;
+        if(!open||!world)return;
+        if(fly.some(f=>f.burst&&f.steer))reband=true; // let the burst land first
+        else toBand(false);
+        wake();
+      },
+      resize(){ // window resized while open: re-form the band for the new size
+        if(!open)return;
+        toBand(false);wake();
+      },
+      scrollSway(dy){ // scrolling the list nudges the letters, then they settle
+        if(!open||!world||!dy)return;
+        const k=clamp(-dy*.05,-2.5,2.5);
+        world.glyphs.forEach((g,i)=>{const m=k*(.7+.06*((i*37)%10));for(const n of g.nodes)n.vy+=m});
+        wake();
+      },
+    };
+  })();
+  window.ProjectStage=stage;
+
+  /* ── Word guard ───────────────────────────────────────────────────────── */
+  // Dragging letters around must never spell PENIS, RAPE or RAPIST. A word counts when its
+  // letters read left to right in one row with nothing between them, however far apart
+  // (R      A P E does); stacked letters don't, so the site's own layouts never trip it.
+  // Once one is spelled, all its letters shuffle: each flies to another one's spot.
+  const guard = (() => {
+    const WORDS=['PENIS','RAPE','RAPIST'];
+    const ht=g=>g.bounds.maxY-g.bounds.minY;
+    const row=(a,b)=>Math.abs(a.cy-b.cy)<Math.min(ht(a),ht(b))*.55;
+    // b reads straight after a: same row, to its right, and no letter in between
+    function next(a,b){
+      if(!(b.cx>a.cx&&row(a,b)))return false;
+      return !world.glyphs.some(c=>c!==a&&c!==b&&c.cx>a.cx&&c.cx<b.cx&&row(a,c)&&row(b,c));
+    }
+    const of=c=>world.glyphs.filter(g=>g.char===c);
+    // every way the letters line up as word w (there are two R, T, I and S)
+    function chains(w){
+      let out=of(w[0]).map(g=>[g]);
+      for(const c of w.slice(1))out=out.flatMap(ch=>of(c).filter(g=>!ch.includes(g)&&next(ch.at(-1),g)).map(g=>[...ch,g]));
+      return out;
+    }
+    function step(){
+      if(!world||intro.active||stage.flying())return; // letters mid-swap can't trigger it again
+      const ch=WORDS.flatMap(chains)[0];if(!ch)return;
+      release(); // let go of the letter being dragged
+      stage.shuffle(ch);
+    }
+    return {step};
+  })();
+
+  /* ── Resize ──────────────────────────────────────────────────────────── */
+  // Flash root cause: canvas.width/height reassignment clears the buffer.
+  // Filling the background (cream) prevented the WHITE flash but left a
+  // cream-without-letters frame visible before the next RAF fires.
+  // Fix: call draw() synchronously after the canvas resize and background fill.
+  // This writes background + current letter positions into the canvas BEFORE
+  // returning control, so the browser never paints a letterless frame.
+  // Floor sits on the top edge of the footer so letters can't cover it.
+  const footerEl = document.querySelector('footer');
+  function measureFloor() { // the stage owns the floor while Projects is open
+    stage.setFooter(footerEl ? Math.max(0, height - footerEl.getBoundingClientRect().top) : 0);
+  }
+
+  function resize() {
+    const nW=canvas.clientWidth, nH=canvas.clientHeight, nR=Math.min(devicePixelRatio||1,2);
+    if (nW===width && nH===height && nR===ratio) return;
+    width=Math.max(40,nW); height=Math.max(40,nH); ratio=nR;
+    measureFloor();
+    canvas.width=Math.round(width*ratio); canvas.height=Math.round(height*ratio);
+    ctx.setTransform(ratio,0,0,ratio,0,0);
+    ctx.fillStyle='#fff'; ctx.fillRect(0,0,width,height);
+
+    if (!ready||!cachedInfos) return;
+    // During the intro the world has never been stepped — rebuild for the new viewport.
+    if (intro.active) { currentComp=pickComp(width,height); build(currentComp); return; }
+
+    // Synchronous draw locks in the current frame before any browser paint.
+    draw();
+    // While Projects is open the stage re-forms the letters itself; the World's area-based
+    // rescale and redistribution would fight its targets, so only the walls move.
+    if (stage.isOpen()) { world.width=width; world.height=height; stage.resize(); }
+    else { world.resize(width, height); intro.cancelHome(); stage.resize(); }
+    if(replay.recording)replay.recordEvent('resize',width,height);
+    renderDirty=true; wake();
+  }
+
+  /* ── Interaction ─────────────────────────────────────────────────────── */
+  function hit(pt) {
+    if (!world) return null;
+    for (let i=world.glyphs.length-1; i>=0; i--)
+      if (world.glyphs[i].hitTest(pt)) return world.glyphs[i];
+    return null;
+  }
+
+  function release() {
+    world?.release();
+    const id=activePtr; activePtr=null;
+    if (id!==null&&canvas.hasPointerCapture(id)) canvas.releasePointerCapture(id);
+    canvas.classList.remove('grabbing');
+  }
+
+  canvas.addEventListener('pointerdown', e => {
+    if (e.button!==0||activePtr!==null||!world||!ready) return;
+    const pt={x:e.clientX,y:e.clientY};
+    if (intro.active) { e.preventDefault(); intro.down(pt); if (intro.active) return; }
+    const g=hit(pt); if (!g) return;
+    e.preventDefault();
+    activePtr=e.pointerId;
+    cancelModeBAnim();
+    canvas.setPointerCapture(e.pointerId);
+    world.grab(g,pt); g.z=++topZ;
+    canvas.classList.add('grabbing');
+    replay.recordEvent('down',e.clientX,e.clientY);
+    wake();
+  });
+
+  canvas.addEventListener('pointermove', e => {
+    if (activePtr!==null&&e.pointerId!==activePtr) return;
+    if (intro.active) { intro.move({x:e.clientX,y:e.clientY}); return; }
+    if (world?.drag) {
+      world.drag.x=clamp(e.clientX,0,width);
+      world.drag.y=clamp(e.clientY,0,height);
+      replay.recordEvent('move',e.clientX,e.clientY);
+      wake();
+    } else {
+      canvas.classList.toggle('grab', !!hit({x:e.clientX,y:e.clientY}));
+    }
+  });
+
+  const endPtr=e=>{ if(e.pointerId===activePtr){replay.recordEvent('up',0,0);release();wake();} };
+  canvas.addEventListener('pointerup',     endPtr);
+  canvas.addEventListener('pointercancel', endPtr);
+  canvas.addEventListener('lostpointercapture', endPtr);
+  canvas.addEventListener('pointerleave', ()=>{canvas.classList.remove('grab'); if(intro.active)intro.move(null);});
+  window.addEventListener('blur', ()=>{release();wake();});
+
+  document.addEventListener('visibilitychange', () => {
+    release();
+    if (document.hidden) { cancelAnimationFrame(raf); raf=0; prevTime=0; accum=0; }
+    else wake();
+  });
+
+  reduced.addEventListener('change', ()=>{ if(world) world.reducedMotion=reduced.matches; wake(); });
+
+  /* ── Keyboard ────────────────────────────────────────────────────────── */
+  // Debug shortcuts (M overlay, C csv, 1/2 record/replay, 3–5 layouts) only with ?debug in the address,
+  // and never with a modifier held, so Cmd+C copies text instead of downloading a csv.
+  const DEBUG_KEYS = new URLSearchParams(location.search).has('debug');
+  document.addEventListener('keydown', e => {
+    if (!DEBUG_KEYS || e.metaKey || e.ctrlKey || e.altKey) return;
+    if(e.key==='m'||e.key==='M'){_measOn=!_measOn;renderDirty=true;draw();}
+    if(e.key==='c'||e.key==='C')meas.download();
+    if(e.key==='1'){replay.recording?replay.stopRecord():replay.startRecord();}
+    if(e.key==='2')replay.startReplay();
+    // keys 3–5 force composition (1/2 reserved for record/replay)
+    const idx = parseInt(e.key) - 1;
+    if (idx>=2 && idx<COMPS.length && cachedInfos && !e.metaKey && !e.ctrlKey) {
+      currentComp=idx; build(currentComp);
+      console.log(`[cc_v25] forced "${COMPS[idx].name}" (key ${e.key})`);
+    }
+  });
+
+  /* ── Bubble intro (bv) ───────────────────────────────────────────────── */
+  // Self-contained: own sim, own fixed-step RAF loop. The World is built in its
+  // final formation and held (wake/draw are no-ops) until handoff. Letters are
+  // drawn from their rest paths through one affine transform per letter:
+  //   screen = pos + (I+E)·Rot(a)·s · (p − rest centre)
+  // which reaches exactly identity on settle, so handoff to draw() is seamless.
+  const intro = (() => {
+    const N=72, STEP=1000/60, TEAR_MS=110, FILM_MS=120, GLASS_MS=200;
+    const LIFE_MS=15000, GROW=.35; // letters swell inside the bubble until it bursts on its own
+    // a direct link to the list or one project skips the bubble: the letters start in the homepage
+    // formation, and stage.open raises the floor into the masthead as the Projects button does
+    const api={active:!/^#\/(?:projects(?:\/[\w-]+)?|about)\/?$/.test(location.hash)};
+    let phase='bubble', raf=0, prev=0, acc=0, t=0, popT=0;
+    let L=[], M=[], drops=[], C={x:0,y:0}, R=1, R0=1, A0=1, edgeLen=1;
+    let pointer=null, lastPtr=null, ripples=[], W2=null, hover=0, popAng=0, popPt=null, film=1, lastW=0, lastH=0;
+    const rnd=(a,b)=>a+Math.random()*(b-a);
+
+    /* Liquid-glass lens: WebGL2 overlay that refracts the letter canvas inside the
+       membrane. Membrane is star-shaped around its centroid, so the shader gets it as
+       64 radii at uniform angles. pfv3 ships one look, LG4 (oil dish, thin rim; LG3's
+       shader with a slimmer meniscus). Falls back to the 2D film without WebGL2. */
+    const glass=(()=>{
+      const el=document.querySelector('#glass'),BINS=64;
+      const gl=el.getContext('webgl2',{alpha:false,antialias:false,premultipliedAlpha:false});
+      if(!gl)return{ok:false};
+      const VS=`#version 300 es
+        in vec2 a;void main(){gl_Position=vec4(a,0,1);}`;
+      const COMMON=`#version 300 es
+        precision highp float;
+        uniform sampler2D u_tex;uniform vec2 u_res;uniform float u_ratio;
+        uniform vec2 u_c;uniform float u_r[${BINS}];uniform float u_R;uniform float u_a;
+        out vec4 o;
+        #ifdef SMOOTH_RIM
+        float rAt(float th){float f=(th/6.2831853+.5)*${BINS}.;float i=floor(f),u=f-i; // Catmull-Rom: smooth outline
+          float a=u_r[int(mod(i-1.,${BINS}.))],b=u_r[int(mod(i,${BINS}.))],c=u_r[int(mod(i+1.,${BINS}.))],d=u_r[int(mod(i+2.,${BINS}.))];
+          return b+.5*u*(c-a+u*(2.*a-5.*b+4.*c-d+u*(3.*(b-c)+d-a)));}
+        #else
+        float rAt(float th){float f=(th/6.2831853+.5)*${BINS}.;float i=floor(f);
+          return mix(u_r[int(mod(i,${BINS}.))],u_r[int(mod(i+1.,${BINS}.))],f-i);}
+        #endif
+        float sdf(vec2 p){vec2 d=p-u_c;return rAt(atan(d.y,d.x))-length(d);}
+        vec2 css(){return vec2(gl_FragCoord.x,u_res.y-gl_FragCoord.y)/u_ratio;}
+        vec3 sampL(vec2 p,float l){return textureLod(u_tex,clamp(p*u_ratio/u_res,0.,1.),l).rgb;}
+        vec3 samp(vec2 p){return sampL(p,0.);}
+      `;
+      // LG3 — oil dish: letters lie flat under clear oil. Where the oil climbs the
+      // dish wall (the meniscus) the surface curves into a strong lens that
+      // stretches letters along the rim and folds them at the edge. Ripples from
+      // the pointer and the pop are little lenses of their own; light splits into
+      // 7 spectral samples as it bends; crests glint; the rim is glossy.
+      const FS3=COMMON.replace('precision highp float;','#define SMOOTH_RIM\n        precision highp float;')+`
+        uniform float u_t;uniform float u_pop;uniform vec4 u_rip[8];uniform int u_nrip;
+        float bell(float x,float w){return exp(-(x*x)/(w*w));}
+        // red (0) → violet (1) as a hue wheel
+        vec3 spec(float l){return clamp(abs(fract(l*.75+vec3(0.,2./3.,1./3.))*6.-3.)-1.,0.,1.);}
+        // slope of the oil surface (dimensionless): idle standing rings in the dish,
+        // plus ripple trains spreading from each source (x, y, age s, amplitude)
+        vec2 waves(vec2 p,float inDish,float spill){
+          vec2 dv=p-u_c;float r=length(dv);vec2 o=r>0.?dv/r:vec2(0.);
+          float k=6.2832/(u_R*.16);
+          vec2 g=-o*.03*sin(k*r)*cos(u_t*.8)*smoothstep(0.,u_R*.15,r)*inDish;
+          for(int i=0;i<8;i++){if(i>=u_nrip)break;vec4 s=u_rip[i];
+            vec2 d=p-s.xy;float rr=length(d);vec2 od=rr>0.?d/rr:vec2(0.);
+            float front=u_R*.6*s.z,kk=6.2832/(u_R*.1);
+            float env=bell(rr-front,u_R*(.2+.25*s.z))*exp(-s.z*1.1)*smoothstep(0.,u_R*.06,rr);
+            g+=od*s.w*.3*cos(kk*(rr-front))*env*max(inDish,spill);}
+          return g;}
+        vec3 split(vec2 p,vec2 bend,float lod){ // 7-sample dispersion: red reaches furthest
+          vec3 acc=vec3(0.),tot=vec3(0.);
+          for(int i=0;i<7;i++){float l=(float(i)+.5)/7.;vec3 w=spec(l);
+            acc+=w*sampL(p+bend*(1.-.9*(l-.5)),lod);tot+=w;}
+          return acc/tot;}
+        float glint(vec2 w){vec3 n=normalize(vec3(-w,1.));return pow(max(dot(n,normalize(vec3(.1,-.15,1.))),0.),700.);}
+        void main(){
+          vec2 p=css();vec2 dv=p-u_c;float L=length(dv);vec2 dir=L>0.?dv/L:vec2(1.,0.);
+          float rl=rAt(atan(dv.y,dv.x)),d=rl-L;
+          float popped=u_pop>=0.?1.:0.;
+          vec3 base=samp(p);
+          if(d<=0.){ // page: dish shadow only
+            float ds=sdf(p-vec2(0.,u_R*.04));
+            float shade=smoothstep(-u_R*.12,u_R*.02,ds)*.07*u_a;
+            o=vec4(base*(1.-shade),1);return;}
+          vec2 w=waves(p,1.,popped);
+          float e=1.-clamp(d/(u_R*.32),0.,1.);           // 0 flat middle → 1 at the dish edge
+          float breathe=1.+.04*sin(u_t*.6);
+          vec2 bend=-dir*u_R*.30*breathe*pow(e,1.15)+w*u_R*.12*(1.+.6*e);
+          vec3 col=split(p,bend,e*e*2.2);
+          col+=.3*glint(w);
+          // rim light: far-side shade, broad glare upper-left, dark band at the edge,
+          // bright line on the key side, fine top highlight
+          float key=dot(dir,normalize(vec2(.55,-.85))),fill=dot(dir,normalize(vec2(-.8,-.45)));
+          vec3 gloss=vec3(.75),edgeC=vec3(1)*.78;
+          col*=1.-.3*smoothstep(.3,.9,e)*smoothstep(0.,1.,-key);
+          col=mix(col,gloss+.25,.45*smoothstep(.1,.6,e)*(1.-smoothstep(.7,.85,e))*pow(max(fill,0.),1.5));
+          col=mix(col,edgeC,smoothstep(.8,.95,e)*.92);
+          col+=gloss*1.2*smoothstep(.79,.85,e)*(1.-smoothstep(.89,.94,e))*pow(max(key,0.),1.2);
+          col+=gloss*.4*smoothstep(.965,.985,e)*(1.-smoothstep(.99,1.,e))*max(key,0.);
+          vec2 P=vec2(dv.x,-dv.y)/u_R;                     // y up, dish units
+          col+=.07*smoothstep(0.,1.3,P.y-.6*P.x);          // window sheen
+          col+=(1.-smoothstep(0.,u_R*.008,d))*(.04+.10*clamp(P.y*.5+.5,0.,1.)); // bezel
+          col+=max(max(col.r,max(col.g,col.b))-1.,0.)*.75; // overexposure bleeds to white
+          float aa=clamp(d*u_ratio*.75,0.,1.);
+          o=vec4(mix(base,clamp(col,0.,1.),aa*u_a),1);
+        }`;
+      // LG4 — LG3 with a thinner rim: narrower meniscus, slimmer dark band and key line
+      const FS4=[
+        ["float e=1.-clamp(d/(u_R*.32),0.,1.);","float e=1.-clamp(d/(u_R*.24),0.,1.);"],
+        ["-dir*u_R*.30*breathe","-dir*u_R*.22*breathe"],
+        ["col=mix(col,edgeC,smoothstep(.8,.95,e)*.92);","col=mix(col,edgeC,smoothstep(.91,.975,e)*.85);"],
+        ["smoothstep(.79,.85,e)*(1.-smoothstep(.89,.94,e))","smoothstep(.9,.93,e)*(1.-smoothstep(.95,.97,e))"],
+      ].reduce((src,[a,b])=>{if(!src.includes(a))throw Error('LG4 patch missing: '+a);return src.replace(a,b)},FS3);
+      const sh=(type,src)=>{const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);
+        if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(s));return s};
+      const link=fs=>{const p=gl.createProgram();gl.attachShader(p,sh(gl.VERTEX_SHADER,VS));gl.attachShader(p,sh(gl.FRAGMENT_SHADER,fs));
+        gl.bindAttribLocation(p,0,'a');gl.linkProgram(p);
+        if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(p));
+        const u={};for(const n of['u_tex','u_res','u_ratio','u_c','u_r','u_R','u_a','u_t','u_pop','u_ptr','u_bands','u_rip','u_nrip'])u[n]=gl.getUniformLocation(p,n);
+        return{p,u}};
+      const progs={};
+      try{progs.lg4=link(FS4);}catch(err){console.warn('[pfv3] glass disabled:',err);return{ok:false};}
+      const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+      gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
+      const tex=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,tex);
+      for(const[k,v]of[[gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR],[gl.TEXTURE_MAG_FILTER,gl.LINEAR],[gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE],[gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE]])gl.texParameteri(gl.TEXTURE_2D,k,v);
+      const bands=matchMedia('(pointer: coarse)').matches?6:12;
+      const style='lg4'; // pfv3: LG4 oil dish, thin rim
+      const radii=new Float32Array(BINS);
+      function sampleRadii(c){ // membrane → radius at BINS uniform angles around c
+        const pts=M.map(p=>({a:Math.atan2(p.y-c.y,p.x-c.x),r:Math.hypot(p.x-c.x,p.y-c.y)})).sort((u,v)=>u.a-v.a);
+        const n=pts.length;
+        for(let b=0;b<BINS;b++){
+          const th=-Math.PI+b/BINS*Math.PI*2;let j=0;while(j<n&&pts[j].a<th)j++;
+          const lo=pts[(j-1+n)%n],hi=pts[j%n];
+          let span=hi.a-lo.a,off=th-lo.a;if(span<=0)span+=Math.PI*2;if(off<0)off+=Math.PI*2;
+          radii[b]=lo.r+(hi.r-lo.r)*(off/span);
+        }
+      }
+      function draw(c,alpha){
+        if(el.width!==canvas.width||el.height!==canvas.height){el.width=canvas.width;el.height=canvas.height}
+        el.hidden=false;
+        gl.viewport(0,0,el.width,el.height);
+        gl.bindTexture(gl.TEXTURE_2D,tex);
+        gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,canvas);
+        gl.generateMipmap(gl.TEXTURE_2D);
+        sampleRadii(c);
+        const{p,u}=progs[style];gl.useProgram(p);
+        gl.uniform1i(u.u_tex,0);gl.uniform2f(u.u_res,el.width,el.height);gl.uniform1f(u.u_ratio,ratio);
+        gl.uniform2f(u.u_c,c.x,c.y);gl.uniform1fv(u.u_r,radii);gl.uniform1f(u.u_R,R);gl.uniform1f(u.u_a,alpha);
+        if(style==='lg2'){
+          const ptr=phase==='bubble'&&lastPtr?[lastPtr.x,lastPtr.y,hover]:[0,0,0];
+          gl.uniform1f(u.u_t,t/1000);gl.uniform1f(u.u_pop,phase==='burst'?(t-popT)/1000:-1);
+          gl.uniform3f(u.u_ptr,...ptr);gl.uniform1i(u.u_bands,bands);
+        }
+        if(style==='lg3'||style==='lg4'){
+          ripples=ripples.filter(r=>t-r.t0<2600);
+          const rip=new Float32Array(32);ripples.slice(-8).forEach((r,i)=>rip.set([r.x,r.y,(t-r.t0)/1000,r.amp],i*4));
+          gl.uniform1f(u.u_t,t/1000);gl.uniform1f(u.u_pop,phase==='burst'?(t-popT)/1000:-1);
+          gl.uniform4fv(u.u_rip,rip);gl.uniform1i(u.u_nrip,Math.min(8,ripples.length));
+        }
+        gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+      }
+      // LG2's shock ring outlives the glass body by a moment after the pop
+      const busy=()=>phase==='burst'&&style==='lg2'&&t-popT<700;
+      const g={ok:true,draw,busy,hide(){el.hidden=true},style:()=>style,oil:()=>style==='lg3'||style==='lg4',onStyle:null};
+      return g;
+    })();
+    const smooth=x=>x<=0?0:x>=1?1:x*x*(3-2*x);
+    const angDist=(a,b)=>Math.abs(Math.atan2(Math.sin(a-b),Math.cos(a-b)));
+
+    function centroid(){let x=0,y=0;for(const p of M){x+=p.x;y+=p.y}return{x:x/N,y:y/N}}
+    function area(){let s=0;for(let i=0;i<N;i++){const a=M[i],b=M[(i+1)%N];s+=a.x*b.y-b.x*a.y}return Math.abs(s)/2}
+    function inside(pt){
+      let c=false;
+      for(let i=0,j=N-1;i<N;j=i++){const a=M[i],b=M[j];
+        if((a.y>pt.y)!==(b.y>pt.y)&&pt.x<(b.x-a.x)*(pt.y-a.y)/(b.y-a.y)+a.x)c=!c}
+      return c||Math.hypot(pt.x-C.x,pt.y-C.y)<R*1.04;
+    }
+    function kickJelly(l,nx,ny,amt){ // compress along n, bulge along tangent
+      const tx=-ny,ty=nx;
+      l.EV[0]+=amt*(-nx*nx+.5*tx*tx); l.EV[1]+=amt*(-nx*ny+.5*tx*ty); l.EV[2]+=amt*(-ny*ny+.5*ty*ty);
+    }
+
+    /* (Re)attach to a freshly built world — first load or resize during intro */
+    function attach(){
+      if(W2)syncFromW2();
+      const prevL=L, prevC=C, prevR=R, pw=lastW||width, ph=lastH||height;
+      C={x:width/2,y:height/2}; R0=Math.min(width,height)*.4; setRadius(); lastW=width; lastH=height;
+      let fx0=Infinity,fx1=-Infinity,fy0=Infinity,fy1=-Infinity;
+      for(const g of world.glyphs){fx0=Math.min(fx0,g.cx);fx1=Math.max(fx1,g.cx);fy0=Math.min(fy0,g.cy);fy1=Math.max(fy1,g.cy)}
+      const fcx=(fx0+fx1)/2,fcy=(fy0+fy1)/2;
+      const fresh=prevL.length!==world.glyphs.length;
+      const next=world.glyphs.map((g,i)=>{
+        const b=g.bounds;
+        const l={g,rest:prepareLetter(g),tx:g.cx,ty:g.cy,r:Math.max(b.maxX-b.minX,b.maxY-b.minY)*.43,
+          ph:fresh?rnd(0,6.28):prevL[i].ph,E:[0,0,0],EV:[0,0,0]};
+        if(!fresh){const o=prevL[i];Object.assign(l,{a:o.a,pa:o.pa,E:o.E,EV:o.EV,
+          s:o.s,vs:o.vs,vx:o.vx,vy:o.vy,va:o.va,delay:o.delay,kicked:o.kicked,kt:o.kt,dir:o.dir,sp:o.sp});}
+        return l;
+      });
+      const sumR2=next.reduce((s,l)=>s+l.r*l.r,0);
+      const sIn=Math.min(1,Math.sqrt(.5*R0*R0/sumR2))*.72; // sway-b: letters start smaller
+      if(fresh){
+        // Seed from the composition's own arrangement, squeezed into the bubble
+        let m=1;for(const g of world.glyphs)m=Math.max(m,Math.hypot(g.cx-fcx,g.cy-fcy));
+        for(const l of next){
+          l.x=l.px=C.x+(l.g.cx-fcx)/m*R*.35+rnd(-2,2); l.y=l.py=C.y+(l.g.cy-fcy)/m*R*.35+rnd(-2,2); // sway-b: packed toward the middle
+          l.a=l.pa=rnd(-.3,.3); l.s=l.s0=sIn;
+        }
+        M=Array.from({length:N},(_,i)=>{const th=i/N*Math.PI*2,x=C.x+Math.cos(th)*R,y=C.y+Math.sin(th)*R;return{th,x,y,px:x,py:y}});
+        L=next; for(let i=0;i<160;i++)stepBubble();
+        for(const l of L){l.px=l.x;l.py=l.y;l.pa=l.a;l.E=[0,0,0];l.EV=[0,0,0]}
+        for(const p of M){p.px=p.x;p.py=p.y}
+        if(useW2()){buildW2();for(let i=0;i<60;i++)stepBubble();for(const n of W2.nodes)n.vx=n.vy=0}
+        t=0;
+      } else if(phase==='bubble'){
+        const k=R/prevR;
+        const map=(o,d)=>{d.x=C.x+(o.x-prevC.x)*k;d.y=C.y+(o.y-prevC.y)*k;d.px=d.x;d.py=d.y};
+        next.forEach((l,i)=>{map(prevL[i],l);l.s0=sIn;l.s=sIn*growAt()});
+        for(const p of M)map(p,p);
+        L=next;
+        if(useW2())buildW2();
+      } else {
+        const kx=width/pw,ky=height/ph;
+        next.forEach((l,i)=>{l.x=prevL[i].x*kx;l.y=prevL[i].y*ky});
+        L=next;
+      }
+      render();
+      if(!raf&&!document.hidden){prev=0;raf=requestAnimationFrame(loop)}
+    }
+
+    // LG3's dish is 82% of the bubble; the membrane springs to the new radius
+    function setRadius(){R=R0*(glass.ok&&glass.oil()?.82:1);A0=Math.PI*R*R;edgeLen=2*Math.PI*R/N}
+    glass.onStyle=()=>{if(phase!=='bubble')return;setRadius();if(useW2()&&!W2)buildW2();else if(!useW2()&&W2)syncFromW2()};
+
+    /* Bubble phase: Verlet letters + membrane, position-based constraints */
+    const life=()=>Math.min(1,t/LIFE_MS);
+    const growAt=()=>1+GROW*life()*life(); // eases in: pressure builds toward the end
+
+    function stepBubble(){
+      t+=STEP;
+      const amb=reduced.matches?0:1, ts=t/1000;
+      const grow=growAt(),strain=life()**3;
+      if(W2){const k=grow/W2._grow;if(k!==1){for(const g2 of W2.glyphs)W2.scaleGlyph(g2,k);W2._grow=grow}}
+      else for(const l of L)l.s=l.s0*grow;
+      hover+=((pointer&&inside(pointer)?1:0)-hover)*.08;
+      const wob=amb*(1+hover*1.6+3*strain);
+      const lg3=glass.ok&&glass.oil(); // tight dish: letters overlap more, held inside the rim
+      const area0=A0*(1+.02*amb*Math.sin(ts*1.4));
+      // film wobble: spring each point toward a gently modulated rest circle
+      const c0=centroid();
+      for(const p of M){
+        const vx=(p.x-p.px)*.94,vy=(p.y-p.py)*.94;p.px=p.x;p.py=p.y;
+        const rr=R*(1+wob*.012*(Math.sin(3*p.th+ts*1.1)+.6*Math.sin(5*p.th-ts*1.7)+.4*Math.sin(2*p.th+ts*.6)+(hover+2*strain)*.35*Math.sin(9*p.th+ts*6)));
+        const tx=c0.x+Math.cos(p.th)*rr,ty=c0.y+Math.sin(p.th)*rr;
+        const mem=lg3?.06:.02;p.x+=vx+(tx-p.x)*mem;p.y+=vy+(ty-p.y)*mem;
+      }
+      if(W2){ // LG3: real cc_v27 stroke physics in a private World; gentle drift, then step
+        // per-letter wander plus a slow swirl around the dish that drifts and reverses
+        const sw=amb*.07*Math.sin(ts*.23+.8);
+        for(const g2 of W2.glyphs){const ph=L[g2.index].ph,dx=g2.cx-C.x,dy=g2.cy-C.y,d=Math.hypot(dx,dy)||1;
+          // sway-b: 4× the centring pull so the small letters stay clustered in the middle
+          const fx=amb*.13*Math.sin(ts*1.1+ph)-dy/d*sw+(C.x-g2.cx)*.0012,fy=amb*.13*Math.cos(ts*.93+ph*1.7)+dx/d*sw+(C.y-g2.cy)*.0012;
+          for(const n of g2.nodes){n.vx+=fx;n.vy+=fy}}
+        W2.step();
+      } else for(const l of L){
+        const vx=(l.x-l.px)*.985,vy=(l.y-l.py)*.985;l.px=l.x;l.py=l.y;
+        l.x+=vx+amb*.02*Math.sin(ts*.8+l.ph)+(C.x-l.x)*.0002;
+        l.y+=vy+amb*.02*Math.cos(ts*.67+l.ph*1.7)+(C.y-l.y)*.0002;
+        const va=(l.a-l.pa)*.96;l.pa=l.a;
+        l.a+=va-l.a*.004+amb*.0006*Math.sin(ts*.9+l.ph*2);
+      }
+      for(let it=0;it<6;it++){
+        // membrane tension
+        for(let i=0;i<N;i++){const a=M[i],b=M[(i+1)%N],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1,k=(d-edgeLen)/d*.4;
+          a.x+=dx*k;a.y+=dy*k;b.x-=dx*k;b.y-=dy*k}
+        // bending: smooth out kinks so the film stays a clean curve
+        const bend=lg3?.18:.12; // LG3: two stronger passes so presses become rounded bulges
+        for(let pass=0;pass<(lg3?2:1);pass++)for(let i=0;i<N;i++){const p=M[i],a=M[(i-1+N)%N],b=M[(i+1)%N];
+          p.x+=((a.x+b.x)/2-p.x)*bend;p.y+=((a.y+b.y)/2-p.y)*bend}
+        // pressure: dilate along normals to hold area
+        const c=centroid(),dA=(area0-area())/(2*Math.PI*R)*.5;
+        for(const p of M){const dx=p.x-c.x,dy=p.y-c.y,d=Math.hypot(dx,dy)||1;p.x+=dx/d*dA;p.y+=dy/d*dA}
+        // pointer pokes the film (dent from outside, bulge from inside)
+        if(pointer){const pr=R*.16;
+          for(const p of M){const dx=p.x-pointer.x,dy=p.y-pointer.y,d=Math.hypot(dx,dy)||1;
+            if(d<pr){const k=(pr-d)/d*.3;p.x+=dx*k;p.y+=dy*k}}}
+        if(W2){ // stroke nodes ↔ membrane: letters press the film, the film squeezes them back
+          for(const n of W2.nodes){const rr=n.rx+1;
+            for(const p of M){const dx=n.x-p.x,dy=n.y-p.y,d=Math.hypot(dx,dy)||.01;
+              if(d<rr){const nx=dx/d,ny=dy/d,ov=rr-d;n.x+=nx*ov*.8;n.y+=ny*ov*.8;p.x-=nx*ov*.2;p.y-=ny*ov*.2}}
+            const dx=n.x-c.x,dy=n.y-c.y,d=Math.hypot(dx,dy),max=R*1.02-n.rx;
+            if(d>max&&d>0){n.x=c.x+dx/d*max;n.y=c.y+dy/d*max}}
+          continue;
+        }
+        // letter ↔ letter
+        for(let i=0;i<L.length;i++)for(let j=i+1;j<L.length;j++){
+          const a=L[i],b=L[j],dx=a.x-b.x,dy=a.y-b.y,d=Math.hypot(dx,dy)||.01,rr=(a.r*a.s+b.r*b.s)*(lg3?.84:.92);
+          if(d<rr){const nx=dx/d,ny=dy/d,ov=(rr-d)*.5;a.x+=nx*ov;a.y+=ny*ov;b.x-=nx*ov;b.y-=ny*ov;
+            if(it===0&&amb){const vn=((a.x-a.px)-(b.x-b.px))*nx+((a.y-a.py)-(b.y-b.py))*ny,amt=Math.min(.06,Math.max(0,-vn)*.03+ov/rr*.05);
+              kickJelly(a,nx,ny,amt);kickJelly(b,nx,ny,amt);
+              const vt=((a.x-a.px)-(b.x-b.px))*-ny+((a.y-a.py)-(b.y-b.py))*nx;a.a+=vt*.0006;b.a-=vt*.0006}}
+        }
+        // letter ↔ membrane
+        for(const l of L){const rr=l.r*l.s+2;
+          for(const p of M){const dx=l.x-p.x,dy=l.y-p.y,d=Math.hypot(dx,dy)||.01;
+            if(d<rr){const nx=dx/d,ny=dy/d,ov=(rr-d)*.5;l.x+=nx*ov;l.y+=ny*ov;p.x-=nx*ov;p.y-=ny*ov;
+              if(it===0&&amb)kickJelly(l,nx,ny,Math.min(.03,ov/rr*.08))}}
+          const dx=l.x-c.x,dy=l.y-c.y,d=Math.hypot(dx,dy),max=R*(lg3?.97:1.08)-l.r*l.s*(lg3?.92:1);
+          if(d>max&&d>0){l.x=c.x+dx/d*max;l.y=c.y+dy/d*max}
+        }
+      }
+      // keep the bubble centred without adding velocity
+      const c=centroid(),sx=(C.x-c.x)*.03,sy=(C.y-c.y)*.03;
+      for(const p of M){p.x+=sx;p.px+=sx;p.y+=sy;p.py+=sy}
+      for(const l of L){l.x+=sx;l.px+=sx;l.y+=sy;l.py+=sy}
+      if(W2){for(const n of W2.nodes){n.x+=sx;n.y+=sy}for(const g2 of W2.glyphs)g2.update()}
+      else for(const l of L)jelly(l,.1,.12);
+      if(t>=LIFE_MS)autoPop();
+    }
+
+    // Nobody popped it: burst at the most stretched point of the rim
+    function autoPop(){
+      const c=centroid();let far=M[0],fd=0;
+      for(const p of M){const d=Math.hypot(p.x-c.x,p.y-c.y);if(d>fd){fd=d;far=p}}
+      down({x:c.x+(far.x-c.x)*.85,y:c.y+(far.y-c.y)*.85});
+    }
+
+    /* LG3 bubble letters: a private World of scaled copies of the real glyphs.
+       The main World is never touched; at the pop (or a style switch) each copy's
+       centroid, rotation and velocity are handed back to its intro letter. */
+    const useW2=()=>glass.ok&&glass.oil();
+    function buildW2(){
+      const gs=L.map(l=>{const g=l.g;
+        const g2=new ArtisType.Glyph({char:g.char},{x:l.x,y:l.y,w:g.w*l.s,h:g.h*l.s,angle:g.angle+l.a},g.index,cachedInfos[g.index].strokes);
+        g2._a0=l.a;return g2});
+      W2=new ArtisType.World(width,height,gs);W2.reducedMotion=reduced.matches;W2._grow=growAt();
+    }
+    function syncFromW2(){
+      if(!W2)return;
+      for(const g2 of W2.glyphs){const l=L[g2.index],k=g2.nodes.length;
+        let vx=0,vy=0,mx=0,my=0;for(const n of g2.nodes){vx+=n.vx;vy+=n.vy;mx+=n.ox;my+=n.oy}vx/=k;vy/=k;mx/=k;my/=k;
+        let cr=0,dt=0;for(const n of g2.nodes){const fx=n.ox-mx,fy=n.oy-my,tx=n.x-g2.cx,ty=n.y-g2.cy;cr+=fx*ty-fy*tx;dt+=fx*tx+fy*ty}
+        l.x=g2.cx;l.y=g2.cy;l.px=l.x-vx;l.py=l.y-vy;l.a=l.pa=g2._a0+Math.atan2(cr,dt);l.s=l.s0*W2._grow;
+      }
+      W2=null;
+    }
+
+    function jelly(l,k,c){
+      for(let i=0;i<3;i++){l.EV[i]=l.EV[i]*(1-c)-l.E[i]*k;l.E[i]=clamp(l.E[i]+l.EV[i],-.35,.35)}
+    }
+
+    /* Pop */
+    function down(pt){
+      if(phase==='burst'&&glass.ok&&glass.style()==='lg4'){launchHandoff();return} // touch mid-throw: physics now
+      if(phase!=='bubble'||!inside(pt))return;
+      syncFromW2();
+      phase='burst';popT=t;pointer=null;canvas.classList.remove('pop');
+      popPt=pt;popAng=Math.atan2(pt.y-C.y,pt.x-C.x);ripples.push({x:pt.x,y:pt.y,t0:t,amp:1.6});
+      const rm=reduced.matches,sp=clamp(R/300,.6,1.8),fb=glass.ok&&glass.style()==='lg4';
+      for(const p of M)p.breakAt=angDist(p.th,popAng)/Math.PI*TEAR_MS;
+      for(const l of L){
+        l.vx=l.x-l.px;l.vy=l.y-l.py;l.va=l.a-l.pa;l.vs=0;l.kicked=false;
+        const a=Math.atan2(l.y-C.y,l.x-C.x),dc=Math.hypot(l.x-C.x,l.y-C.y)/R;
+        l.delay=fb?10+angDist(a,popAng)/Math.PI*TEAR_MS*.5+(1-dc)*25+rnd(0,15) // LG4: tighter stagger
+                  :20+angDist(a,popAng)/Math.PI*TEAR_MS+(1-dc)*60+rnd(0,40);
+        l.dir=dc>.08?a:rnd(0,6.28);l.sp=rm?0:sp*rnd(7,11);
+      }
+      const beads=!(glass.ok&&glass.oil()); // LG3 pops clean, no droplets
+      for(let i=0;i<14&&!rm&&beads;i++){const a=popAng+rnd(-.9,.9),v=rnd(2,7);
+        drops.push({x:pt.x,y:pt.y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,r:rnd(1,2.6),life:1,hue:rnd(0,360)})}
+    }
+
+    /* LG4: the throw routes each letter out of the burst toward its spot; halfway
+       through, while they're still flying fast, the real World takes over with their
+       live velocities. A homing force applied from outside the World (like drag;
+       World code untouched) steers the final approach, so the letters genuinely
+       collide as they arrive, then fades out and leaves plain cc_v27 physics. */
+    let homing=null;
+    // The throw grows letters to full size on the way (projectorgv3's); a letter blocked on its
+    // way home squeezes to SQ to slip past the one in its way (as the Projects stage's)
+    const SQ=.55;
+    const touching=(a,b)=>{const p=a.bounds,q=b.bounds;return p.minX<q.maxX&&p.maxX>q.minX&&p.minY<q.maxY&&p.maxY>q.minY};
+    // the letter touching g that's furthest along its way to (tx,ty), if any
+    function blocker(g,tx,ty){
+      let best=null,bd=0;
+      for(const o of world.glyphs){if(o===g||!touching(g,o))continue;
+        const d=(o.cx-g.cx)*(tx-g.cx)+(o.cy-g.cy)*(ty-g.cy);if(d>bd){bd=d;best=o}}
+      return best;
+    }
+    function launchHandoff(){
+      const list=L.map(l=>({g:l.g,tx:l.tx,ty:l.ty,delay:l.delay,scale:l.s,sv:l.vs||0}));
+      handoffNow(); // carries each letter's live throw velocity into the World
+      // enter the World at bubble size (rest shape only — positions already placed), then grow
+      for(const h of list)if(h.scale!==1)shrinkRest(h.g,h.scale);
+      homing={list,steps:0,delayless:true};world.returning=list.length; // World.busy honours returning: no sleep while homing
+    }
+    function shrinkRest(g,k){
+      g.w*=k;g.h*=k;g.radius*=k;
+      for(const n of g.nodes){n.ox*=k;n.oy*=k;n.rx*=k;n.ry*=k}
+      for(const ln of g.links)ln.length*=k;
+    }
+    function homeStep(){ // called by the main loop before each world.step()
+      if(!homing)return;
+      const ms=++homing.steps*STEP;let active=0;
+      for(const h of homing.list){ // sway-b: grow back on an underdamped spring — swells past full size, then jiggles back
+        const goal=h.sq?SQ:1;
+        if(h.scale!==goal||h.sv){h.sv+=(goal-h.scale)*.05-h.sv*.18;let next=h.scale+h.sv;
+          if(Math.abs(goal-next)<.001&&Math.abs(h.sv)<.0005){next=goal;h.sv=0}
+          world.scaleGlyph(h.g,next/h.scale);h.scale=next;active++}}
+      for(const h of homing.list){
+        if(h.done)continue;const g=h.g;
+        if(world.drag?.glyph===g){h.done=true;h.sq=0;continue} // grabbed: hands off for good
+        const ramp=smooth(ms/120); // ease the steering in over the first few frames
+        let vx=0,vy=0;for(const n of g.nodes){vx+=n.vx;vy+=n.vy}vx/=g.nodes.length;vy/=g.nodes.length;
+        const dx=h.tx-g.cx,dy=h.ty-g.cy;
+        // blocked short of its spot (no progress for 0.5 s) by a letter ahead of it, it squeezes
+        // past, and is back to size once that letter's no longer ahead (or it's home). So a jam
+        // doesn't end the homing; only arrival or the 4 s limit does
+        const dist=Math.hypot(dx,dy);
+        if(!h.fade){
+          if(h.cool>0)h.cool--;
+          if(dist<(h.best??Infinity)-2){h.best=dist;h.since=0}else h.since=(h.since||0)+1;
+          if(!h.sq&&!h.cool&&h.since>30&&dist>g.radius*2){const b=blocker(g,h.tx,h.ty);if(b){h.sq=1;h.sqb=b}h.since=0;h.best=Infinity}
+          if(h.sq){const b=h.sqb,ahead=touching(g,b)&&(b.cx-g.cx)*dx+(b.cy-g.cy)*dy>0;
+            if(!ahead||dist<g.radius*2||++h.sq>240){h.sq=0;h.cool=30;h.since=0;h.best=Infinity}}
+        }
+        if(!h.fade&&((dist<4&&Math.hypot(vx,vy)<.5)||ms>4000)){h.fade=ms;h.sq=0}
+        const w=ramp*(h.fade?1-smooth((ms-h.fade)/300):1);if(w<=0){h.done=true;continue}
+        active++;
+        let ax=(dx*.012-vx*.05)*w,ay=(dy*.012-vy*.05)*w; // sway-b: half the steering brake, so they overshoot and swayconst am=Math.hypot(ax,ay);if(am>2.5){ax*=2.5/am;ay*=2.5/am}
+        for(const n of g.nodes){n.vx+=ax;n.vy+=ay}
+      }
+      world.returning=active;if(!active)homing=null;
+    }
+    function cancelHome(){ // stale targets: stop steering, but never leave a letter undersized
+      if(!homing)return;
+      for(const h of homing.list)if(h.scale!==1&&world)world.scaleGlyph(h.g,1/h.scale);
+      homing=null;if(world)world.returning=0;
+    }
+    // Projects opened mid-intro: pop the bubble if it's still up and hand the letters straight
+    // to the World mid-flight (no throw arc, no homing) so the caller steers them at once.
+    // Returns each letter's formation spot and full width (its "home") plus the bubble to flash.
+    function popNow(){
+      if(!api.active)return releaseHome();
+      if(phase==='bubble')down({x:C.x,y:C.y});
+      const ring={x:C.x,y:C.y,r:R},list=L.map(l=>({g:l.g,tx:l.tx,ty:l.ty,s:l.s}));
+      handoffNow();
+      for(const h of list)if(h.s!==1)shrinkRest(h.g,h.s);
+      return {ring,list:list.map(h=>({g:h.g,tx:h.tx,ty:h.ty,w:h.g.w/h.s}))};
+    }
+    function releaseHome(){ // hand the post-pop homing to the caller without snapping sizes
+      if(!homing)return null;
+      const list=homing.list.map(h=>({g:h.g,tx:h.tx,ty:h.ty,w:h.g.w/h.scale}));
+      homing=null;if(world)world.returning=0;
+      return {ring:null,list};
+    }
+
+    /* Burst phase: per-letter springs to formation pose (underdamped → overshoot) */
+    function stepBurst(){
+      t+=STEP;const e=t-popT,rm=reduced.matches,fb=glass.ok&&glass.style()==='lg4';
+      film=Math.max(0,1-e/(glass.ok?GLASS_MS:FILM_MS));
+      if(glass.ok&&film>0)for(const p of M){ // glass splashes outward as it dissolves
+        const dx=p.x-C.x,dy=p.y-C.y,d=Math.hypot(dx,dy)||1,v=R*.03*film;p.x+=dx/d*v;p.y+=dy/d*v}
+      for(const p of M)if(!p.broken&&e>=p.breakAt){
+        p.broken=true;
+        if(!rm&&Math.random()<.7&&!(glass.ok&&glass.oil())){const dx=p.x-C.x,dy=p.y-C.y,d=Math.hypot(dx,dy)||1,v=rnd(2,5);
+          drops.push({x:p.x,y:p.y,vx:dx/d*v,vy:dy/d*v,r:rnd(.8,2.2),life:1,hue:p.th*57.3})}
+      }
+      for(const d of drops){d.x+=d.vx;d.y+=d.vy;d.vx*=.95;d.vy=d.vy*.95+.06;d.life-=STEP/520}
+      drops=drops.filter(d=>d.life>0);
+      let settled=true,maxDelay=0,throwing=false;
+      for(const l of L){
+        maxDelay=Math.max(maxDelay,l.delay);
+        if(fb){ // LG4 throw: an arc out of the burst toward its spot (ease-out); physics finishes it
+          if(!l.kicked&&e>=l.delay){
+            l.kicked=true;l.kt=e;
+            const ux=Math.cos(l.dir),uy=Math.sin(l.dir),dist=Math.hypot(l.tx-l.x,l.ty-l.y),out=rm?0:R*rnd(.45,.75);
+            l.f={x0:l.x,y0:l.y,cx:l.x+ux*out,cy:l.y+uy*out,s0:l.s,T:rm?400:clamp(420+dist*.3,480,820),
+                 a0:Math.atan2(Math.sin(l.a),Math.cos(l.a))+(rm?0:rnd(.4,1)*(Math.random()<.5?-1:1))};
+            l.E=[0,0,0];l.EV=[0,0,0];
+          }
+          const px=l.x,py=l.y,pa=l.a,ps=l.s;
+          if(!l.kicked){l.vx*=.95;l.vy*=.95;l.x+=l.vx;l.y+=l.vy;throwing=true;continue}
+          const f=l.f,tau=Math.min(1,(e-l.kt)/f.T),u=1-(1-tau)**3,iu=1-u;
+          l.x=iu*iu*f.x0+2*u*iu*f.cx+u*u*l.tx;l.y=iu*iu*f.y0+2*u*iu*f.cy+u*u*l.ty;
+          l.a=f.a0*iu;l.s=f.s0+(1-f.s0)*u;
+          l.vx=l.x-px;l.vy=l.y-py;l.va=l.a-pa;l.vs=l.s-ps;
+          if(tau<.3)throwing=true; // sway-b: hand off earlier, while still flying fast (was .55)
+          continue;
+        }
+        if(!l.kicked&&e>=l.delay){
+          l.kicked=true;l.kt=e;
+          const ux=Math.cos(l.dir),uy=Math.sin(l.dir);
+          l.vx+=ux*l.sp;l.vy+=uy*l.sp;
+          if(!rm){l.va+=rnd(.05,.14)*(Math.random()<.5?-1:1);kickJelly(l,-uy,ux,.18)}
+        }
+        const w=l.kicked?smooth((e-l.kt-50)/220):0;
+        const K=.02*w,Kd=(rm?.28:.13)*w+.012;
+        l.vx+=K*(l.tx-l.x)-Kd*l.vx;l.vy+=K*(l.ty-l.y)-Kd*l.vy;l.x+=l.vx;l.y+=l.vy;
+        l.a=Math.atan2(Math.sin(l.a),Math.cos(l.a));
+        l.va+=.025*w*(-l.a)-((rm?.32:.12)*w+.02)*l.va;l.a+=l.va;
+        l.vs+=.03*w*(1-l.s)-((rm?.35:.15)*w+.01)*l.vs;l.s+=l.vs;
+        // jelly: stretch along velocity, springing back when it turns around
+        const v=Math.hypot(l.vx,l.vy),mag=rm?0:Math.min(.3,v*.018),ux=v?l.vx/v:0,uy=v?l.vy/v:0;
+        const T=[mag*(ux*ux-.45*uy*uy),mag*1.45*ux*uy,mag*(uy*uy-.45*ux*ux)];
+        for(let i=0;i<3;i++){l.EV[i]=(l.EV[i]+(T[i]-l.E[i])*.16)*.86;l.E[i]=clamp(l.E[i]+l.EV[i],-.35,.35)}
+        if(!l.kicked||Math.hypot(l.tx-l.x,l.ty-l.y)>.35||v>.08||Math.abs(l.a)>.002||Math.abs(l.va)>.001||
+           Math.abs(1-l.s)>.002||Math.abs(l.vs)>.001||l.E.some(x=>Math.abs(x)>.003))settled=false;
+      }
+      if(fb){if(!throwing)launchHandoff();return}
+      if((settled&&e>maxDelay+300&&!drops.length)||e>6000)finish();
+    }
+
+    /* LG4: hand off mid-flight. Each letter's on-screen pose (position, rotation,
+       scale, squish) and velocity are written into its main-world nodes; the World's
+       own shape recovery then springs it back to full size. No home force exists in
+       the physics, so letters stay wherever they were when touched. */
+    function handoffNow(){
+      for(const l of L){
+        const co=Math.cos(l.a),si=Math.sin(l.a),[xx,xy,yy]=l.E,s=l.s;
+        const m00=((1+xx)*co+xy*si)*s,m01=(-(1+xx)*si+xy*co)*s,m10=(xy*co+(1+yy)*si)*s,m11=(-xy*si+(1+yy)*co)*s;
+        for(const n of l.g.nodes){
+          const rx=n.x-l.tx,ry=n.y-l.ty,x=l.x+m00*rx+m01*ry,y=l.y+m10*rx+m11*ry;
+          n.x=x;n.y=y;n.vx=(l.vx||0)-(l.va||0)*(y-l.y);n.vy=(l.vy||0)+(l.va||0)*(x-l.x);
+        }
+        l.g.update();
+      }
+      finish();
+    }
+
+    /* Handoff: world nodes were never moved, so identity transform == draw() */
+    function finish(){
+      api.active=false;cancelAnimationFrame(raf);raf=0;
+      L=[];M=[];drops=[];canvas.classList.remove('pop');if(glass.ok)glass.hide();
+      renderDirty=true;draw();wake();
+    }
+
+    /* Rendering */
+    function membranePath(scale=1){
+      const c=scale===1?null:centroid(),path=new Path2D();
+      const P=i=>{const p=M[(i+N)%N];return c?{x:c.x+(p.x-c.x)*scale,y:c.y+(p.y-c.y)*scale}:p};
+      const mid=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
+      let s=mid(P(-1),P(0));path.moveTo(s.x,s.y);
+      for(let i=0;i<N;i++){const e=mid(P(i),P(i+1)),p=P(i);path.quadraticCurveTo(p.x,p.y,e.x,e.y)}
+      path.closePath();return path;
+    }
+    function rimPath(){ // only unbroken film segments
+      const path=new Path2D(),mid=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2});let open=false;
+      for(let i=0;i<N;i++){const p=M[i];
+        if(p.broken){open=false;continue}
+        const s=mid(M[(i-1+N)%N],p),e=mid(p,M[(i+1)%N]);
+        if(!open){path.moveTo(s.x,s.y);open=true}
+        path.quadraticCurveTo(p.x,p.y,e.x,e.y);
+      }
+      return path;
+    }
+    function filmGradient(c){
+      const ang=t/2400;
+      if(ctx.createConicGradient){
+        const g=ctx.createConicGradient(ang,c.x,c.y);
+        [[0,'rgba(231,0,106,.55)'],[.2,'rgba(255,190,70,.5)'],[.4,'rgba(110,220,190,.5)'],
+         [.6,'rgba(90,150,255,.55)'],[.8,'rgba(190,110,255,.5)'],[1,'rgba(231,0,106,.55)']].forEach(([o,col])=>g.addColorStop(o,col));
+        return g;
+      }
+      const g=ctx.createLinearGradient(c.x-R,c.y-R,c.x+R,c.y+R);
+      g.addColorStop(0,'rgba(231,0,106,.5)');g.addColorStop(.5,'rgba(110,220,190,.5)');g.addColorStop(1,'rgba(90,150,255,.5)');
+      return g;
+    }
+    function drawLetter(l){
+      const co=Math.cos(l.a),si=Math.sin(l.a),[xx,xy,yy]=l.E,s=l.s;
+      const m00=((1+xx)*co+xy*si)*s,m01=(-(1+xx)*si+xy*co)*s,m10=(xy*co+(1+yy)*si)*s,m11=(-xy*si+(1+yy)*co)*s;
+      ctx.save();
+      ctx.setTransform(ratio*m00,ratio*m10,ratio*m01,ratio*m11,
+        ratio*(l.x-(m00*l.tx+m01*l.ty)),ratio*(l.y-(m10*l.tx+m11*l.ty)));
+      drawSolid(l.g,l.rest);
+      ctx.restore();
+    }
+    function render(){
+      ctx.setTransform(ratio,0,0,ratio,0,0);
+      ctx.fillStyle='#fff';ctx.fillRect(0,0,width,height);
+      const c=centroid(),f=phase==='bubble'?1:film;
+      if(f>0&&!glass.ok){ // film body behind the letters
+        const body=membranePath(),g=ctx.createRadialGradient(c.x-R*.3,c.y-R*.35,R*.1,c.x,c.y,R*1.05);
+        g.addColorStop(0,`rgba(255,255,255,${.28*f})`);g.addColorStop(.75,`rgba(240,236,250,${.12*f})`);g.addColorStop(1,`rgba(214,206,236,${.3*f})`);
+        ctx.fillStyle=g;ctx.fill(body);
+      }
+      if(W2)for(const g2 of [...W2.glyphs].sort((a,b)=>(L[a.index].g.z||0)-(L[b.index].g.z||0)))drawSolid(g2,prepareLetter(g2));
+      else for(const l of [...L].sort((a,b)=>(a.g.z||0)-(b.g.z||0)))drawLetter(l);
+      if(!glass.ok&&(f>0||phase==='bubble')){
+        const rim=phase==='bubble'?membranePath():rimPath();
+        ctx.save();ctx.lineCap='round';
+        ctx.globalAlpha=phase==='bubble'?1:Math.min(1,f*2);
+        ctx.strokeStyle='rgba(255,255,255,.55)';ctx.lineWidth=7;ctx.stroke(rim);
+        ctx.strokeStyle=filmGradient(c);ctx.lineWidth=2.2;ctx.stroke(rim);
+        ctx.strokeStyle='rgba(70,40,80,.16)';ctx.lineWidth=.8;ctx.stroke(rim);
+        if(phase==='bubble'){ // specular highlights
+          ctx.globalAlpha=1;ctx.translate(c.x-R*.45,c.y-R*.5);ctx.rotate(-.75);
+          const hg=ctx.createRadialGradient(0,0,0,0,0,R*.22);
+          hg.addColorStop(0,'rgba(255,255,255,.75)');hg.addColorStop(1,'rgba(255,255,255,0)');
+          ctx.scale(1,.36);ctx.fillStyle=hg;ctx.beginPath();ctx.arc(0,0,R*.22,0,Math.PI*2);ctx.fill();
+          ctx.setTransform(ratio,0,0,ratio,0,0);
+          ctx.fillStyle='rgba(255,255,255,.8)';ctx.beginPath();ctx.arc(c.x-R*.22,c.y-R*.7,R*.025,0,Math.PI*2);ctx.fill();
+        }
+        ctx.restore();
+      }
+      if(phase==='burst'){ // rupture flash + droplets
+        const e=t-popT;
+        if(e<260&&!glass.ok){ctx.save();ctx.globalAlpha=.35*(1-e/260);ctx.strokeStyle=filmGradient(c);ctx.lineWidth=1.5;
+          ctx.stroke(membranePath(1+e/260*.15));ctx.restore()}
+        for(const d of drops){
+          if(glass.ok){ // clear glass beads: faint body, dark edge, white glint
+            ctx.beginPath();ctx.arc(d.x,d.y,d.r*1.4,0,Math.PI*2);
+            ctx.fillStyle=`rgba(255,255,255,${d.life*.55})`;ctx.fill();
+            ctx.strokeStyle=`rgba(60,50,70,${d.life*.25})`;ctx.lineWidth=.8;ctx.stroke();
+            ctx.fillStyle=`rgba(255,255,255,${d.life})`;ctx.beginPath();ctx.arc(d.x-d.r*.45,d.y-d.r*.45,d.r*.45,0,Math.PI*2);ctx.fill();
+          } else {ctx.fillStyle=`hsla(${d.hue},85%,62%,${d.life*.8})`;ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fill()}
+        }
+      }
+      if(glass.ok){if(f>0||glass.busy())glass.draw(c,f);else glass.hide()}
+    }
+
+    function loop(time){
+      raf=0;if(!api.active)return;
+      if(document.hidden){prev=0;return}
+      acc+=prev?Math.min(time-prev,MAX_DELTA):STEP;prev=time;
+      let n=0;
+      while(acc>=STEP&&n<MAX_STEPS){phase==='bubble'?stepBubble():stepBurst();acc-=STEP;n++;if(!api.active)return}
+      render();raf=requestAnimationFrame(loop);
+    }
+
+    function move(pt){
+      if(phase!=='bubble')return;
+      pointer=pt;if(pt)lastPtr=pt;const over=!!pt&&inside(pt);canvas.classList.toggle('pop',over);
+      const lr=ripples.at(-1);
+      if(over&&(!lr||Math.hypot(pt.x-lr.x,pt.y-lr.y)>R*.12||t-lr.t0>400))ripples.push({x:pt.x,y:pt.y,t0:t,amp:.45});
+    }
+
+    document.addEventListener('visibilitychange',()=>{
+      if(!api.active)return;
+      if(document.hidden){cancelAnimationFrame(raf);raf=0;prev=0;acc=0}
+      else if(!raf&&L.length){prev=0;raf=requestAnimationFrame(loop)}
+    });
+
+    const bubble=()=>phase==='bubble'&&L.length?{x:C.x,y:C.y,r:R}:null; // for the "pop me" hint
+    return Object.assign(api,{attach,down,move,homeStep,cancelHome,popNow,releaseHome,bubble});
+  })();
+
+  /* "pop me": if a visitor hasn't touched anything 2.5 s after the bubble appears, a hand-written note
+     (the About page's marker style) points at it. It fades for good at the first hover, tap, key or pop */
+  (()=>{
+    const hint=document.getElementById('pop-hint');let gone=false,raf=0;
+    const bye=()=>{if(gone)return;gone=true;hint.classList.remove('show');cancelAnimationFrame(raf)};
+    for(const ev of['pointerdown','keydown','wheel','touchstart'])addEventListener(ev,bye,{capture:true,passive:true,once:true});
+    const place=()=>{
+      const b=intro.active&&intro.bubble();
+      if(!b||canvas.classList.contains('pop')){bye();return} // popped, or the pointer is over the bubble
+      hint.style.left=Math.min(innerWidth-110,b.x+b.r*.62)+'px';hint.style.top=Math.max(8,b.y-b.r*1.02-34)+'px';
+      raf=requestAnimationFrame(place);
+    };
+    setTimeout(()=>{
+      if(gone||!intro.active||!intro.bubble())return;
+      if(!document.getElementById('gaegu'))document.head.insertAdjacentHTML('beforeend','<link id="gaegu" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu&display=swap">');
+      place();if(!gone)hint.classList.add('show');
+    },2500);
+  })();
+
+  /* ── Init ────────────────────────────────────────────────────────────── */
+  new ResizeObserver(resize).observe(canvas);
+  resize();
+
+  Promise.all(ALL_SVGS.map(url=>SvgLoader.loadSvgInfo(url)))
+    .then(infos => {
+      cachedInfos=infos;
+      logDiagnostics();
+      currentComp=pickComp(width, height);
+      console.log(`[cc_v12] initial layout: "${COMPS[currentComp].name}" for ${width}×${height}`);
+      build(currentComp);
+    })
+    .catch(err => console.error('[cc_v12]', err));
+})();
+
+/* ── Info modal + Projects: list and case studies (projectorgv6) ─────────
+   The address is the source of truth: (no hash) home, #/projects the list, #/projects/<slug> a
+   case study. Every in-page move is a history entry, so back/forward and the phone's back gesture
+   just work; each entry keeps its own scroll position. Only home <-> list/project moves the letters
+   (stage.open/close, as v5's toggle did); list <-> project only swaps what the sheet shows. */
+(() => {
+  const about    = document.getElementById('about');
+  const infoBtn  = document.getElementById('info-btn');
+  const projects = document.getElementById('projects');
+  const projBtn  = document.getElementById('projects-btn');
+  const sheet    = projects.querySelector('.sheet');
+  const listView = document.getElementById('list-view'), grid = listView.querySelector('.project-grid');
+  const projView = document.getElementById('project-view');
+  const zoom     = document.getElementById('zoom');
+  const stage    = window.ProjectStage;
+  const HOME_URL = location.pathname + location.search, TITLE = document.title;
+  let infoOpen = false, sheetOpen = false, view = { name: 'home' }, data = null, media = {}, waitOpen = 0;
+
+  /* routes */
+  const keyOf  = v => v.name === 'project' ? 'project:' + v.slug : v.name;
+  const hrefOf = v => v.name === 'home' ? HOME_URL : v.name === 'list' ? '#/projects' : v.name === 'about' ? '#/about' : '#/projects/' + v.slug;
+  function parse(hash) {
+    if (/^#\/about\/?$/.test(hash)) return { name: 'about' }; // the hidden About page (a link in Info)
+    const m = /^#\/projects(?:\/([\w-]+))?\/?$/.exec(hash);
+    if (!m) return { name: 'home' };
+    return m[1] ? { name: 'project', slug: m[1] } : { name: 'list' };
+  }
+  function saveScroll() { if (history.state) history.replaceState({ ...history.state, scroll: sheet.scrollTop }, ''); }
+  function go(v) { // a new history entry (a link, a button, next project)
+    if (keyOf(v) === keyOf(view)) return;
+    saveScroll();
+    history.pushState({ view: v, scroll: 0, prev: keyOf(view) }, '', hrefOf(v));
+    show(v, 0);
+  }
+  function up() { // Esc, Close, ← Projects: one level toward home; step back when that's where we came from
+    const target = view.name === 'project' ? { name: 'list' } : { name: 'home' };
+    if (history.state?.prev === keyOf(target)) history.back(); else go(target);
+  }
+  addEventListener('popstate', e => show(e.state?.view ?? parse(location.hash), e.state?.scroll ?? 0));
+
+  /* the sheet and the letters */
+  function openSheet(then) {
+    if (sheetOpen) { then(); return; }
+    stage.open(); // pops the bubble if it's up; does nothing until the letters have loaded
+    if (!stage.isOpen()) { waitOpen = requestAnimationFrame(() => { if (view.name !== 'home') openSheet(then); }); return; }
+    sheetOpen = true;
+    projects.classList.add('open'); projects.setAttribute('aria-hidden', 'false'); projects.inert = false;
+    then();
+  }
+  function closeSheet() {
+    cancelAnimationFrame(waitOpen);
+    if (!sheetOpen) return;
+    sheetOpen = false;
+    projects.classList.remove('open'); projects.setAttribute('aria-hidden', 'true'); projects.inert = true;
+    stage.close(); // the letters fly to a fresh homepage layout
+    pauseAll();
+  }
+  let lastScroll = 0;
+  function setScroll(y) { sheet.scrollTop = y; lastScroll = sheet.scrollTop; } // a jump, not a scroll: no sway
+  // scrolling the list (or a case study) sways the letters
+  // ...and the history entry remembers where you are, so back/forward lands you there again
+  let saveT = 0;
+  sheet.addEventListener('scroll', () => {
+    const y = sheet.scrollTop; stage.scrollSway(y - lastScroll); lastScroll = y;
+    clearTimeout(saveT); saveT = setTimeout(saveScroll, 150);
+  }, { passive: true });
+
+  function show(v, scroll) {
+    clearTimeout(saveT);
+    view = v;
+    const p = v.name === 'project' && data?.projects.find(q => q.slug === v.slug);
+    projBtn.textContent = v.name === 'home' ? 'Projects' : v.name === 'project' ? '← Projects' : 'Close';
+    projBtn.setAttribute('aria-expanded', String(v.name !== 'home'));
+    document.title = p ? p.title + ' — ' + TITLE : v.name === 'about' ? 'About — ' + TITLE : TITLE;
+    // the letters take the case study's colour, or go back to pink; on About, every project's at once
+    window.ArtisInk(v.name === 'about' ? data?.projects.map(q => q.color).flat() : p?.color);
+    if (v.name === 'home') { closeSheet(); stage.setCompact(false); return; }
+    stage.setCompact(v.name !== 'list'); // the masthead slims inside a case study (and on About)
+    openSheet(() => {
+      if (v.name !== 'list' && !data) { ready.then(() => view === v && show(v, scroll)); return; }
+      if (v.name === 'project' && !p) { history.replaceState({ view: { name: 'list' }, scroll: 0 }, '', hrefOf({ name: 'list' })); show({ name: 'list' }, 0); return; }
+      pauseAll();
+      listView.hidden = v.name !== 'list'; projView.hidden = v.name === 'list';
+      if (p) renderProject(p);
+      if (v.name === 'about') { renderAbout(); setTimeout(() => view === v && stage.wobble(), 500); }
+      setScroll(scroll);
+      playVisible();
+    });
+  }
+
+  /* media */
+  const SIZES = '91vw';
+  function mediaEl(ref, { sizes = SIZES, eager = false } = {}) {
+    const it = media[ref.src], fig = document.createElement('figure');
+    if (!it) { fig.className = 'm-wrap'; fig.innerHTML = '<div class="m" style="aspect-ratio:16/9"></div>'; return fig; }
+    fig.className = 'm-wrap'; fig.style.setProperty('--max', it.w + 'px');
+    fig.style.setProperty('--ar', (it.w / it.h).toFixed(4));
+    if (ref.inset) { fig.classList.add('m-inset'); const p = (1 - ref.inset) / 2 * 100; fig.style.setProperty('--pad', (p * it.h / it.w).toFixed(2) + '% ' + p.toFixed(2) + '%'); fig.style.setProperty('--edge', p.toFixed(2) + '%'); }
+    if (ref.n) fig.dataset.n = ref.n; // the image's fixed number ("n" in projects.json), kept in the page but not shown
+    let el;
+    if (it.kind === 'image') {
+      el = document.createElement('img');
+      el.srcset = it.sizes.map(s => it.base + s.file + ' ' + s.w + 'w').join(', ');
+      el.sizes = sizes; el.src = it.base + it.sizes[Math.min(1, it.sizes.length - 1)].file;
+      el.alt = ref.alt || ''; el.loading = eager ? 'eager' : 'lazy'; el.decoding = 'async';
+      if (ref.protect) { fig.classList.add('m-protect'); el.draggable = false; fig.addEventListener('contextmenu', e => e.preventDefault()); }
+      else { el.classList.add('zoomable'); el.dataset.zoom = it.base + it.sizes.at(-1).file; }
+    } else {
+      el = document.createElement('video');
+      el.muted = true; el.loop = true; el.playsInline = true; el.preload = 'none';
+      el.setAttribute('muted', ''); el.setAttribute('playsinline', '');
+      el.poster = it.base + it.poster; el.dataset.src = it.base + it.mp4;
+      if (it.gif) el.dataset.gif = it.base + it.gif;
+      if (ref.alt) el.setAttribute('aria-label', ref.alt);
+      if (ref.zoom) el.classList.add('zoomable'); // opt-in: a tap plays it large
+      watch.observe(el);
+    }
+    el.classList.add('m'); el.width = it.w; el.height = it.h; el.style.aspectRatio = it.w + ' / ' + it.h;
+    fig.append(el);
+    if (ref.inset && ref.frame) fig.append(Object.assign(document.createElement('div'), { className: 'm-frame' }));
+    return fig;
+  }
+  // videos play only while on screen (battery); one that can't autoplay (iPhone Low Power Mode) shows its GIF
+  const watch = new IntersectionObserver(es => es.forEach(e => e.isIntersecting ? play(e.target) : e.target.pause?.()), { threshold: .2 });
+  function play(v) {
+    if (!v.isConnected || v.tagName !== 'VIDEO' || sheet.closest('[inert]')) return;
+    if (!v.src) v.src = v.dataset.src;
+    v.play().catch(() => {
+      if (!v.dataset.gif) return;
+      const g = document.createElement('img');
+      g.src = v.dataset.gif; g.alt = v.getAttribute('aria-label') || ''; g.className = v.className; g.style.cssText = v.style.cssText;
+      v.replaceWith(g);
+    });
+  }
+  function pauseAll() { sheet.querySelectorAll('video').forEach(v => v.pause()); }
+  function playVisible() { // the observer only reports changes, so kick what's already in view
+    for (const v of sheet.querySelectorAll('#' + (view.name === 'list' ? 'list-view' : 'project-view') + ' video')) {
+      const r = v.getBoundingClientRect(); if (r.bottom > 0 && r.top < innerHeight) play(v);
+    }
+  }
+
+  /* views */
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  function renderList() {
+    grid.innerHTML = '';
+    for (const p of data.projects) {
+      const a = document.createElement('a');
+      a.className = 'project'; a.href = hrefOf({ name: 'project', slug: p.slug });
+      const thumb = document.createElement('div'); thumb.className = 'thumb';
+      if (/\.mp4$/.test(p.card.src)) {
+        const v = document.createElement('video');
+        Object.assign(v, { muted: true, loop: true, playsInline: true, preload: 'metadata', poster: p.card.poster });
+        v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.dataset.src = p.card.src;
+        thumb.append(v); watch.observe(v);
+      } else {
+        const img = document.createElement('img'); img.src = p.card.src; img.alt = p.card.alt || ''; img.loading = 'lazy';
+        thumb.append(img);
+      }
+      a.append(thumb);
+      a.insertAdjacentHTML('beforeend', `<p>${esc(p.title)}</p><p class="meta">${esc(p.type)}</p>`);
+      grid.append(a);
+    }
+  }
+  function textEl(tag, cls, s) { const e = document.createElement(tag); if (cls) e.className = cls; e.textContent = s; return e; }
+  // The self-portrait draws itself, stroke by stroke (a centreline trace, longest strokes taking
+  // longest), once it's on screen; then the exact outline of the original drawing takes over
+  function drawPortrait(box) {
+    fetch('about/portrait.svg', { cache: 'no-cache' }).then(r => r.text()).then(svg => {
+      box.innerHTML = svg + '<div class="btw" aria-hidden="true"><svg viewBox="0 0 46 22"><path d="M44 13 C33 15 20 15 4 10 M10 4 L3 10 L11 15"/></svg><span>me btw<svg class="to-photo" viewBox="0 0 60 18"><path d="M9 1 C7 10 15 15 29 14 C40 13 48 12 55 10 M49 6 L56 10 L50 15"/></svg></span></div>';
+      if (!document.getElementById('gaegu')) document.head.insertAdjacentHTML('beforeend', // the note's marker font, only for this page
+        '<link id="gaegu" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu&display=swap">');
+      const strokes = [...box.querySelectorAll('.strokes path')], done = () => box.classList.add('done');
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches || !box.animate) return done();
+      const L = strokes.map(p => p.getTotalLength()), total = L.reduce((a, b) => a + b, 0), TIME = 2600;
+      strokes.forEach((p, i) => { p.style.strokeDasharray = L[i]; p.style.strokeDashoffset = L[i]; });
+      const obs = new IntersectionObserver(([e]) => {
+        if (!e.isIntersecting) return; obs.disconnect();
+        let t = 0;
+        strokes.forEach((p, i) => {
+          const d = Math.max(40, L[i] / total * TIME);
+          p.animate([{ strokeDashoffset: L[i] }, { strokeDashoffset: 0 }], { duration: d, delay: t, fill: 'forwards', easing: 'ease-in-out' });
+          t += d * .85;
+        });
+        setTimeout(done, t + 200);
+      }, { threshold: .3 });
+      obs.observe(box);
+    }).catch(() => {});
+  }
+  // The hidden About page: the case-study layout, then every project in its own colour
+  function renderAbout() {
+    projView.innerHTML = '';
+    const c = document.createElement('article'); c.className = 'case about';
+    const head = document.createElement('div'); head.className = 'case-head';
+    const h1 = document.createElement('h1'), side = document.createElement('div');
+    h1.append(textEl('span', 'title', 'About'), textEl('span', 'type', 'VCD / UX / UI'));
+    const portrait = document.createElement('div'); portrait.className = 'portrait';
+    side.append(h1); drawPortrait(portrait);
+    const text = document.createElement('div'); text.className = 'case-text';
+    for (const t of ["I am a visual communication designer and photographer with roots to California, Panama and Washington.",
+                     "I see life through a lens obsessed with patterns, textures and storytelling.",
+                     "Seeing how colour can communicate rhythm and identity itches a spot in my brain, i.e., where design meets sport, how a space, a mark or something as simple as a jersey can carry pride and emotion.",
+                     "Brand identities, environmental graphics, digital experiences.",
+                     "Outside of the computer, I competed as a Division I long jumper and two-time All-American at the University of Washington. I enjoy traveling without itineraries... and talking, I love to talk.",
+                     "On the weekends, you'll find me running and jumping into sand pits :)"])
+      text.append(textEl('p', '', t));
+    const meta = document.createElement('div'); meta.className = 'case-meta';
+    const mail = textEl('a', '', 'partisuw@gmail.com'); mail.href = 'mailto:partisuw@gmail.com';
+    const ig = textEl('a', 'ig-link', '@iprestin'); Object.assign(ig, { href: 'https://www.instagram.com/iprestin/', target: '_blank', rel: 'noopener' });
+    const cv = textEl('a', '', 'Resume (PDF)'); Object.assign(cv, { href: 'prestin-artis-resume.pdf', target: '_blank', rel: 'noopener' });
+    for (const a of [mail, ig, cv]) { const d = document.createElement('div'); d.append(a); meta.append(d); }
+    head.append(side, text, meta);
+    // the photo from the old Cargo About page: under the bio, or on a phone beside the drawing, above it all
+    const ph = document.createElement('figure'); ph.className = 'about-photo';
+    const img = document.createElement('img'); img.className = 'm zoomable';
+    img.srcset = [800, 1600, 2400].map(w => `about/prestin-scooter-${w}.jpg ${w}w`).join(', ');
+    img.sizes = '(max-width: 543px) 100vw, 30vw'; img.src = 'about/prestin-scooter-1600.jpg'; img.dataset.zoom = 'about/prestin-scooter-2400.jpg';
+    img.alt = 'Prestin, laughing in white sunglasses, balanced upside down on a stool holding a scooter overhead';
+    img.width = 2400; img.height = 3600; img.loading = 'lazy'; ph.append(img);
+    if (PHONE.matches) {
+      const top = document.createElement('div'); top.className = 'about-top';
+      img.sizes = '50vw'; top.append(portrait, ph); c.append(top, head);
+    } else { img.sizes = '280px'; side.append(portrait); meta.append(ph); c.append(head); } // small, under the resume link
+    const list = document.createElement('div'); list.className = 'about-work';
+    for (const q of data.projects) {
+      const a = document.createElement('a'); a.href = hrefOf({ name: 'project', slug: q.slug });
+      const t = textEl('span', 'title', q.title); t.style.background = [].concat(q.color || '#E7006A')[0];
+      a.append(t, textEl('span', 'type', q.type)); list.append(a);
+    }
+    c.append(list); projView.append(c);
+  }
+  function renderProject(p) {
+    projView.innerHTML = '';
+    const c = document.createElement('article'); c.className = 'case';
+    const back = textEl('a', 'back', '← Projects'); back.href = hrefOf({ name: 'list' }); c.append(back);
+    c.append(mediaEl(p.hero, { eager: true }));
+    // the introduction, in malaikafrancique.com's format: title + disciplines (one per line) |
+    // a short description (blank lines split paragraphs) | kind of project, client, year, then the
+    // rest of the credits (unknowns stay blank) and links
+    const head = document.createElement('header'); head.className = 'case-head';
+    const h1 = document.createElement('h1'); h1.append(textEl('span', 'title', p.title));
+    if (p.type) { const t = document.createElement('span'); t.className = 'type';
+      p.type.split(/\s*\+\s*/).forEach((d, i) => { if (i) t.append(document.createElement('br')); t.append(d); }); h1.append(t); }
+    head.append(h1);
+    const text = document.createElement('div'); text.className = 'case-text';
+    for (const para of (p.summary || '').split(/\n\s*\n/)) if (para.trim()) text.append(textEl('p', '', para.trim()));
+    const meta = document.createElement('dl'); meta.className = 'case-meta';
+    for (const [k, v] of [['Project', p.context], ['Client', p.client], ['Year', p.year], ['Team', (p.team || []).join(', ')], ['Role', p.role]]) {
+      if (!v) continue;
+      const d = document.createElement('div'); d.append(textEl('dt', '', k), textEl('dd', '', v)); meta.append(d);
+    }
+    for (const k of p.links || []) {
+      const d = document.createElement('div'), a = textEl('a', '', k.label + ' \u2197\uFE0E'); // FE0E: a text arrow, not iOS's emoji box
+      a.href = k.url; a.target = '_blank'; a.rel = 'noopener'; d.append(a); meta.append(d);
+    }
+    head.append(text, meta); c.append(head);
+    const blocks = document.createElement('div'); blocks.className = 'blocks';
+    for (const b of p.blocks) blocks.append(blockEl(b));
+    c.append(blocks);
+    // the longer writing comes after the work: the quote, then each section in its own column
+    if (p.quote || p.sections?.length) {
+      const notes = document.createElement('section'); notes.className = 'case-notes';
+      if (p.quote) notes.append(textEl('blockquote', 'quote', p.quote));
+      // a section marked "below" stacks under the previous one, in the same column
+      for (const s of p.sections || []) {
+        const prev = notes.lastElementChild, stack = s.below && prev?.tagName === 'DIV';
+        const d = stack ? prev : document.createElement('div');
+        const h3 = textEl('h3', '', s.heading); if (stack) h3.style.marginTop = '1.6em';
+        d.append(h3, textEl('p', '', s.body)); if (!stack) notes.append(d);
+      }
+      c.append(notes);
+    }
+    const i = data.projects.indexOf(p), n = data.projects[(i + 1) % data.projects.length];
+    const next = document.createElement('a'); next.className = 'next';
+    if (i === data.projects.length - 1) { // after the last project: what Prestin is working on now
+      Object.assign(next, { href: 'https://apps.apple.com/us/app/pelicula/id6763131679', target: '_blank', rel: 'noopener' });
+      next.classList.add('next-app');
+      const icon = Object.assign(document.createElement('img'), { src: 'soon/pelicula-icon.png', width: 48, height: 48, alt: '' });
+      const t = document.createElement('div');
+      t.append(textEl('span', '', 'Currently working on'), textEl('strong', '', 'Pelicula \u2197\uFE0E'), textEl('span', 'next-sub', 'An iPhone app to rank and track the films you\'ve seen'));
+      next.append(icon, t);
+    } else {
+      next.href = hrefOf({ name: 'project', slug: n.slug });
+      next.append(textEl('span', '', 'Next project'), textEl('strong', '', n.title));
+    }
+    c.append(next);
+    projView.append(c);
+    fadeIn(c);
+  }
+  // Each image below the first screen fades up the first time it scrolls into the sheet. What's
+  // already showing when the project opens (after any scroll restore) appears as is, so nothing
+  // flickers; reduced-motion settings turn it off.
+  let fadeObs = null;
+  function fadeIn(c) {
+    fadeObs?.disconnect(); fadeObs = null;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const figs = [...c.querySelectorAll('.blocks figure')].filter(f => !f.closest('.b-ticker')); // a ticker is already moving
+    figs.forEach(f => f.classList.add('fade-wait'));
+    fadeObs = new IntersectionObserver(es => es.forEach(e => {
+      if (!e.isIntersecting) return;
+      e.target.classList.replace('fade-wait', 'fade-in'); fadeObs.unobserve(e.target);
+    }), { root: sheet, rootMargin: '0px 0px -8% 0px' });
+    requestAnimationFrame(() => { // after show() has restored the scroll position
+      const view = sheet.getBoundingClientRect();
+      for (const f of figs) {
+        const r = f.getBoundingClientRect();
+        if (r.top < view.bottom && r.bottom > view.top) f.classList.remove('fade-wait'); else fadeObs?.observe(f);
+      }
+    });
+  }
+  // The ticker's drift: while nobody is touching it (and a fling has coasted to a stop), the strip
+  // scrolls on by DRIFT px a second. It sits in the middle of its three copies, jumping back one
+  // copy's width when it drifts past, so it never runs out either way. Runs only while on screen
+  function ticker(t, track) {
+    const DRIFT = 35, still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let pos = 0, third = 0, raf = 0, prev = 0, touching = false, userAt = 0, seen = false;
+    const setup = () => { third = track.scrollWidth / 3; if (third) { pos = third; t.scrollLeft = pos; } };
+    const tick = now => {
+      raf = 0; if (!t.isConnected) return;
+      const dt = prev ? Math.min(.05, (now - prev) / 1000) : 0; prev = now;
+      if (!third) setup();
+      if (third && !touching && now - userAt > 600) { // idle: drift, and keep to the middle copy
+        if (pos >= 2 * third) pos -= third; else if (pos < third) pos += third;
+        if (!still) pos += DRIFT * dt;
+        t.scrollLeft = pos;
+      }
+      if (seen) raf = requestAnimationFrame(tick);
+    };
+    t.addEventListener('scroll', () => { // a scroll we didn't make is the visitor's: hand over
+      if (Math.abs(t.scrollLeft - pos) > 2) { pos = t.scrollLeft; userAt = performance.now(); }
+    }, { passive: true });
+    t.addEventListener('touchstart', () => { touching = true; }, { passive: true });
+    for (const ev of ['touchend', 'touchcancel']) t.addEventListener(ev, () => { touching = false; userAt = performance.now(); }, { passive: true });
+    t.addEventListener('wheel', () => { userAt = performance.now(); }, { passive: true });
+    new IntersectionObserver(([e]) => { seen = e.isIntersecting; prev = 0; if (seen && !raf) raf = requestAnimationFrame(tick); }).observe(t);
+  }
+  // The panorama's glide: end to end at GLIDE px a second, resting a moment at each end, while
+  // nobody is touching it; a visitor's own pan hands it over the same way as the ticker
+  function pano(w) {
+    const GLIDE = 30, REST = 1200, still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let pos = 0, dir = 1, raf = 0, prev = 0, touching = false, userAt = 0, restUntil = 0, seen = false;
+    const tick = now => {
+      raf = 0; if (!w.isConnected) return;
+      const dt = prev ? Math.min(.05, (now - prev) / 1000) : 0; prev = now;
+      const max = w.scrollWidth - w.clientWidth;
+      if (!still && max > 0 && !touching && now - userAt > 600 && now > restUntil) {
+        pos += dir * GLIDE * dt;
+        if (pos >= max) { pos = max; dir = -1; restUntil = now + REST; }
+        if (pos <= 0) { pos = 0; dir = 1; restUntil = now + REST; }
+        w.scrollLeft = pos;
+      }
+      if (seen) raf = requestAnimationFrame(tick);
+    };
+    w.addEventListener('scroll', () => { if (Math.abs(w.scrollLeft - pos) > 2) { pos = w.scrollLeft; userAt = performance.now(); } }, { passive: true });
+    w.addEventListener('touchstart', () => { touching = true; }, { passive: true });
+    for (const ev of ['touchend', 'touchcancel']) w.addEventListener(ev, () => { touching = false; userAt = performance.now(); }, { passive: true });
+    new IntersectionObserver(([e]) => { seen = e.isIntersecting; prev = 0; if (seen && !raf) raf = requestAnimationFrame(tick); }).observe(w);
+  }
+  const PHONE = matchMedia('(max-width: 543px)');
+  PHONE.addEventListener('change', () => { // tickers and rows swap at the phone width
+    const p = view.name === 'project' && data?.projects.find(q => q.slug === view.slug);
+    if (view.name === 'about') { const y = sheet.scrollTop; renderAbout(); setScroll(y); return; }
+    if (p && p.blocks.some(b => b.kind === 'ticker' || b.media?.[0]?.pano)) { const y = sheet.scrollTop; renderProject(p); setScroll(y); }
+  });
+  function blockEl(b) {
+    if (b.kind === 'text') return textEl('blockquote', 'b-quote', b.quote || b.body || '');
+    if (b.kind === 'full' && b.media[0].pano && PHONE.matches) { // panorama on phones
+      const it = media[b.media[0].src], w = document.createElement('div'), f = mediaEl(b.media[0]);
+      w.className = 'b-pano'; if (it) f.style.setProperty('--h', it.h + 'px'); w.append(f);
+      pano(w); return w;
+    }
+    if (b.kind === 'full') return mediaEl(b.media[0]);
+    if (b.kind === 'row') {
+      const r = document.createElement('div'); r.className = 'b-row' + (b.stack === false ? ' keep' : '');
+      const share = Math.round(100 / b.media.length);
+      for (const m of b.media) r.append(mediaEl(m, { sizes: `(max-width: 543px) ${b.stack === false ? share : 100}vw, ${share}vw` }));
+      return r;
+    }
+    if (b.kind === 'ticker') { // a strip on phones; on wider screens, rows of b.rows images each
+      if (!PHONE.matches) {
+        const g = document.createElement('div'); g.style.display = 'contents'; let i = 0;
+        for (const n of b.rows) { g.append(blockEl({ kind: 'row', media: b.media.slice(i, i + n) })); i += n; }
+        return g;
+      }
+      const t = document.createElement('div'), track = document.createElement('div');
+      t.className = 'b-ticker'; track.className = 'track'; t.append(track);
+      for (const copy of [0, 1, 2]) for (const m of b.media) {
+        const it = media[m.src], f = mediaEl(m, { sizes: it ? Math.round(38 * it.w / it.h) + 'vh' : '100vw', eager: true });
+        if (it) f.style.setProperty('--h', it.h + 'px');
+        if (copy) f.setAttribute('aria-hidden', 'true');
+        track.append(f);
+      }
+      ticker(t, track);
+      return t;
+    }
+    if (b.kind === 'cols') {
+      const g = document.createElement('div'); g.className = 'b-cols';
+      for (const col of b.cols) {
+        const d = document.createElement('div'); d.style.setProperty('--span', col.span);
+        if (col.heading) d.append(textEl('h3', '', col.heading));
+        if (col.body) d.append(textEl('p', '', col.body));
+        for (const m of col.media || []) d.append(mediaEl(m, { sizes: `(max-width: 543px) 100vw, ${Math.round(col.span / 12 * 100)}vw` }));
+        if (col.after) d.append(textEl('h3', '', col.after.heading), textEl('p', '', col.after.body));
+        g.append(d);
+      }
+      return g;
+    }
+    return document.createElement('div');
+  }
+
+  /* zoom: tap an image for the largest size, or a zoomable video to play it large from the same moment */
+  const zImg = zoom.querySelector('img'), zVid = zoom.querySelector('video');
+  projView.addEventListener('click', e => {
+    const el = e.target.closest('.zoomable'); if (!el) return;
+    if (el.tagName === 'VIDEO') {
+      zImg.hidden = true; zVid.hidden = false;
+      if (zVid.src !== new URL(el.dataset.src, location.href).href) zVid.src = el.dataset.src;
+      zVid.poster = el.poster; zVid.currentTime = el.currentTime || 0; zVid.play().catch(() => {});
+    } else {
+      zVid.hidden = true; zImg.hidden = false; zImg.src = el.dataset.zoom; zImg.alt = el.alt;
+    }
+    zoom.hidden = false;
+  });
+  function closeZoom() { zoom.hidden = true; zVid.pause(); }
+  zoom.addEventListener('click', closeZoom);
+
+  /* in-page links: cards, ← Projects, next project */
+  sheet.addEventListener('click', e => {
+    const a = e.target.closest('a[href^="#/projects"]');
+    if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return; // new-tab clicks open the direct link
+    e.preventDefault();
+    const v = parse(a.getAttribute('href'));
+    if (v.name === 'list' && view.name === 'project') up(); else go(v);
+  });
+
+  // Instagram preview: the embed loads on the first hover, sits beside the link, and stays while the
+  // pointer moves onto it (so it can be scrolled); touch screens just follow the link
+  const igBox = document.getElementById('ig-preview');
+  let igHide = 0;
+  document.addEventListener('pointerover', e => {
+    const a = e.target.closest?.('.ig-link');
+    if (e.pointerType !== 'mouse') return;
+    if (a) {
+      clearTimeout(igHide);
+      if (!igBox.firstChild) igBox.innerHTML = '<iframe src="https://www.instagram.com/iprestin/embed/" title="Instagram: @iprestin" loading="lazy"></iframe>';
+      const r = a.getBoundingClientRect(), W = 340, H = 374, m = 12;
+      const top = r.top - H - m > 8 ? r.top - H - m : Math.min(innerHeight - H - 8, r.bottom + m);
+      igBox.style.left = Math.max(8, Math.min(innerWidth - W - 8, r.left + r.width / 2 - W / 2)) + 'px';
+      igBox.style.top = Math.max(8, top) + 'px';
+      igBox.classList.add('show');
+    } else if (e.target.closest?.('#ig-preview')) clearTimeout(igHide);
+    else igHide = setTimeout(() => igBox.classList.remove('show'), 250);
+  });
+  document.getElementById('about-link').addEventListener('click', e => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+    e.preventDefault(); toggleInfo(false); go({ name: 'about' });
+  });
+
+  /* Info: an overlay that leaves the page underneath (and your place in it) alone */
+  function toggleInfo(open = !infoOpen) {
+    infoOpen = open;
+    about.classList.toggle('open', open);
+    about.setAttribute('aria-hidden', String(!open));
+    infoBtn.textContent = open ? 'Close' : 'Info';
+  }
+  infoBtn.addEventListener('click', () => { toggleSoon(false); toggleInfo(); });
+  // "VCD / UX / UI": the coming-up card, which works the same way as Info (only one is open at a time)
+  const soon = document.getElementById('soon'), soonBtn = document.getElementById('soon-btn');
+  let soonOpen = false;
+  function toggleSoon(open = !soonOpen) {
+    soonOpen = open;
+    soon.classList.toggle('open', open); soon.setAttribute('aria-hidden', String(!open));
+    soonBtn.setAttribute('aria-expanded', String(open)); // keeps its name: a second "Close" beside Projects' would be confusing
+  }
+  soonBtn.addEventListener('click', () => { if (infoOpen) toggleInfo(false); toggleSoon(); });
+  soon.addEventListener('click', e => { if (e.target === soon) toggleSoon(false); });
+  projBtn.addEventListener('click', () => { if (infoOpen) toggleInfo(false); toggleSoon(false); view.name === 'home' ? go({ name: 'list' }) : up(); });
+  about.addEventListener('click', e => { if (e.target === about) toggleInfo(false); });
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    if (!zoom.hidden) closeZoom();
+    else if (infoOpen) toggleInfo(false);
+    else if (soonOpen) toggleSoon(false);
+    else if (view.name !== 'home') up();
+  });
+
+  /* boot: load the data, then show whatever the address asks for (a direct link opens straight in) */
+  const ready = Promise.all([
+    // no-cache: always revalidate, so a browser never pairs fresh pages with stale project data
+    fetch('projects.json', { cache: 'no-cache' }).then(r => r.json()),
+    fetch('projects/media.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : {}).catch(() => ({})),
+  ]).then(([d, m]) => { data = d; media = m; renderList(); });
+  // a link to the list or one project opens straight into it (a refresh stays where you were)
+  const first = parse(location.hash);
+  history.replaceState({ view: first, scroll: 0 }, '', hrefOf(first));
+  if (first.name !== 'home') ready.then(() => show(first, 0));
+})();
+</script>
+</body>
+</html>

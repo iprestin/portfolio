@@ -1,0 +1,212 @@
+{
+  "_about": "projectorgv7 project data: drives the Projects list and every case study. Media `src` is <archive page>/<saved_as> under archive/cargo/ (never served); tools/build-media.py turns each into the optimized files listed in projects/media.json. Block kinds: full (one item, capped at its natural width), row (items side by side at equal height, widths by aspect; stack:false keeps them side by side on phones), cols (12-column grid; each col has span plus media and/or heading/body), text (heading/body/quote). Order follows the old Cargo pages. Unknown years/credits are left empty.",
+  "projects": [
+    {
+      "slug": "where-champions-are-made",
+      "color": "#4B2E83",
+      "title": "Where Champions Are Made",
+      "type": "Environmental Graphics + Wayfinding",
+      "context": "Capstone Project",
+      "client": "UW Athletics",
+      "year": "2025",
+      "team": ["Prestin Artis"],
+      "role": "",
+      "card": {"src": "projects/where-champions-are-made/cover.jpg", "alt": "A University of Washington athletics building entrance with a large W sign and yellow sport words painted on the ground"},
+      "hero": {"src": "where-champions-are-made-1/champions-entrance-over-hang-cover.png", "alt": "A University of Washington athletics building entrance with a large W sign and yellow sport words painted on the ground"},
+      "summary": "For three years I trained in UW Athletics' facilities and wondered what they would feel like if they reflected the same pride, identity and passion we competed with. This capstone reimagines the department's brand experience through pictograms, signage and spatial graphics.\n\nThe system pairs custom sport pictograms and arena maps with large-scale storytelling walls, so athletes, staff and visitors can find their way while honoring the Olympians, national champions and All-Americans who define the program's legacy.",
+      "sections": [
+        {"heading": "Challenge", "body": "University of Washington's athletic facilities lacked cohesive wayfinding and spatial identity. Despite serving Olympic-level and D1 athletes, the environment felt disconnected and difficult to navigate. As both a designer and D1 athlete who trained in these spaces daily, I recognized the gap between the caliber of athletes and the quality of their environment."},
+        {"heading": "Solution", "body": "Designed a comprehensive wayfinding and environmental graphics system including custom pictograms, modular signage architecture, spatial storytelling installations, and user journey mapping for three distinct audiences (athletes, staff, visitors). The system balances athletic identity with functional clarity."},
+        {"heading": "Impact", "body": "System establishes visual consistency across 50+ facility touchpoints, improves navigation clarity for 800+ student athletes, and transforms underutilized spaces into branded environments that reinforce UW Athletics' competitive identity."}
+      ],
+      "links": [{"label": "Full case study on Medium", "url": "https://medium.com/@partis_60040/where-champions-are-made-capstone-documentation-15c657065f60"}],
+      "blocks": [
+        {"kind": "ticker", "rows": [3, 3], "media": [
+          {"src": "where-champions-are-made-1/before-entrance.jpg", "alt": "The athletics building entrance before: a bare loading-dock alley", "n": 1},
+          {"src": "where-champions-are-made-1/before-navigation.jpg", "alt": "The existing wayfinding: a small black sign listing rooms", "n": 2},
+          {"src": "where-champions-are-made-1/before-court-entrance.jpg", "alt": "The court entrance hallway before: plain concrete and barricades", "n": 3},
+          {"src": "where-champions-are-made-1/Group-171.png", "alt": "Pictogram sketches and process", "n": 4},
+          {"src": "where-champions-are-made-1/early-picto.jpg", "alt": "Early pictogram construction on a grid", "n": 5},
+          {"src": "where-champions-are-made-1/washington-ng-detail-rebuild.png", "alt": "Detail of the custom WASHINGTON lettering: the N and G on their construction grid, crossed by red stripes", "n": "9b"}
+        ]},
+        {"kind": "text", "quote": "What if the spaces I train in reflected the same level of pride, identity, and passion that I compete with? That question became the foundation for this capstone."},
+        {"kind": "full", "media": [{"src": "where-champions-are-made-1/SYMBOLS-W-BACKGROUN.png", "alt": "The system's custom sport pictograms", "n": 6}]},
+        {"kind": "row", "media": [
+          {"src": "where-champions-are-made-1/pictogram-grid.jpg", "alt": "A pictogram built on the system grid with WASHINGTON lettering", "n": 7},
+          {"src": "where-champions-are-made-1/friday-3.jpg", "alt": "Arena map posters for locker rooms, meeting rooms and facilities", "n": 10}
+        ]},
+        {"kind": "full", "media": [{"src": "where-champions-are-made-1/signage-mockup.png", "alt": "The arena map posters lit on a purple wall", "n": 11}]},
+        {"kind": "full", "media": [{"src": "where-champions-are-made-1/Screen-Recording-2026-05-08-at-10.29.24-AM.mov", "alt": "A walkthrough of the system", "n": 17, "zoom": true, "pano": true}]},
+        {"kind": "full", "media": [{"src": "where-champions-are-made-1/bow-down-wall.jpg", "alt": "A BOW DOWN TO WASHINGTON wall graphic with the husky mascot", "n": 12}]},
+        {"kind": "row", "media": [
+          {"src": "where-champions-are-made-1/washington-wall.jpg", "alt": "A neon Washington state outline over WASHINGTON lettering", "n": 13},
+          {"src": "where-champions-are-made-1/huskies-glass.jpg", "alt": "HUSKIES graphics on the glass wall into the court", "n": 14}
+        ]},
+        {"kind": "full", "media": [{"src": "where-champions-are-made-1/lanyards.jpg", "alt": "Athlete ID lanyards in the system", "n": 16}]},
+        {"kind": "full", "media": [{"src": "where-champions-are-made-1/702.jpg", "alt": "The full set of sport pictograms on purple", "n": 8}]}
+      ]
+    },
+    {
+      "slug": "share-a-smile",
+      "color": "#E74400",
+      "title": "Share a Smile",
+      "type": "Branding",
+      "context": "Collaboration",
+      "client": "Tyler Artis",
+      "year": "",
+      "team": [],
+      "role": "",
+      "card": {"src": "projects/share-a-smile/cover.jpg", "alt": "A scatter of colorful Share a Smile cards"},
+      "hero": {"src": "share-a-smile/artisSAS-29.jpg", "alt": "Share a Smile campaign photo"},
+      "summary": "Extended brand graphics, creative direction and select photography for Share a Smile, Tyler Artis's campaign and social club built around the smile as a form of connection.\n\nThe design direction intended to invite people in while leaving room for the complexity behind a smile. I drew inspiration from honest storytelling, with bright colors, fun photography and expressive typography, while staying true to Tyler's original logo.",
+      "sections": [
+        {"heading": "Overview", "body": "Share a Smile is a visual campaign and social club built around one idea: joy as a form of connection. The work leans on honest storytelling and expressive design, with soft textures, bold type and community touchpoints that treat the smile as something powerful and real."},
+        {"heading": "The brief", "body": "Tyler came in with the idea that a smile could change someone's day. Together we pushed it further: what if a smile could be a form of connection, defiance or healing? The goal was never just to make something look good. It was to build a story around a radical kind of optimism."},
+        {"heading": "My role", "body": "Tyler Artis created the Share a Smile logo and owns the brand. My part is the supporting brand world around it: extended brand graphics, creative direction and select photography, developed as an ongoing collaboration since 2022."}
+      ],
+      "links": [],
+      "original": {"brief_paragraph_shown_until_2026-10-25": "When I was brought on to design for the Share a Smile Project, the goal wasn’t just to make something visually appealing—it was to help build a narrative around a radical kind of optimism. The client came in with the idea that a smile could change someone’s day, and together we pushed that further: what if a smile could be a form of connection, defiance, or healing?", "role_paragraph_shown_until_2026-10-25": "As the lead designer, I worked to translate that ethos into a visual system and story that felt honest, empathetic, and active. We weren’t interested in empty feel-good messages. Instead, we treated the phrase as a design element with power... something that could travel across print, space, and community. I helped develop everything from the campaign’s tone of voice to the layout of story-collecting booths and print collateral. We used bright colors, fun photography and expressive typography to invite people in, while still making room for the complexity behind the act of smiling. It was about seeing people, really seeing them, and acknowledging that sometimes joy is an act of resistance. The final identity reflected that spirit: approachable, unexpected, and a little bit brave.", "credit_confirmed_2026-10-25": "Tyler Artis created the original logo and owns the brand. Prestin's contributions: extended brand graphics, creative direction, select photography. Ongoing.", "cargo": "SHARE A SMILE — Branding\nTeam: tyler artis\n\nThe Share a Smile Project is a visual campaign built around the idea of joy as connection and using the smile to create a social club. Centered on honest storytelling and expressive design, the identity uses soft textures, bold typography, and community-driven touchpoints to reframe the smile as something powerful and real.", "cargo_share_a_smile_page": "(archive/cargo/share-a-smile-page/text.md holds two versions of the role paragraphs. The first version reads:) As the lead designer, I worked to translate that ethos into a visual system and story that felt honest, empathetic, and active. We weren’t interested in saccharine slogans or empty feel-good messages. Instead, we treated the smile as a design element with power—something that could travel across print, space, and community. I helped develop everything from the campaign’s tone of voice to the layout of story-collecting booths and print collateral. We used soft, human textures and expressive typography to invite people in, while still making room for the complexity behind the act of smiling. This wasn’t about masking reality—it was about seeing people, really seeing them, and acknowledging that sometimes joy is an act of resistance. The final identity reflected that spirit: approachable, unexpected, and a little bit brave."},
+      "blocks": [
+        {"kind": "full", "media": [{"src": "share-a-smile/Asset-54x-100.jpg", "alt": "Share a Smile cards", "n": 1}]},
+        {"kind": "row", "stack": false, "media": [
+          {"src": "share-a-smile/artisSAS-26.jpg", "alt": "Share a Smile portrait", "n": 2},
+          {"src": "share-a-smile/artisSAS-11.jpg", "alt": "Share a Smile portrait", "n": 3},
+          {"src": "share-a-smile/artisSAS-1.jpg", "alt": "Share a Smile portrait", "n": 4}
+        ]},
+        {"kind": "cols", "cols": [
+          {"span": 4, "media": [{"src": "share-a-smile/samsasvideo-ezgif.com-optimize.gif", "alt": "Share a Smile motion piece", "n": 5}]},
+          {"span": 8, "media": [{"src": "share-a-smile/Asset-34x-100-trimmed.jpg", "alt": "The Share a Smile wordmark, SHARE A over a script Smile, in white on its construction grid", "n": 6}]}
+        ]},
+        {"kind": "full", "media": [{"src": "share-a-smile/sas-campaign-cards.png", "alt": "Three shareasmileproject Instagram posts on lime: a photo of two friends making a heart with their hands, the SHARE A Smile wordmark on green, and a note reading You carry warmth in a way people notice. Thank you :)", "n": 10}]}
+      ]
+    },
+    {
+      "slug": "black-irons-golf",
+      "color": "#000000",
+      "title": "Black Irons Golf",
+      "type": "Identity Design + Branding",
+      "year": "",
+      "team": [],
+      "role": "",
+      "card": {"src": "projects/black-irons-golf/cover.jpg", "alt": "The Black Irons Golf Group mark over a black-and-white photo of a golfer"},
+      "hero": {"src": "black-irons-golf/Frame-39.png", "alt": "Golfers beside a giant sand trap, captioned: there's a lesson in every green"},
+      "summary": "For Black Irons Golf Group, a brand built for Black golfers, I wanted the identity to feel rooted in culture, community and self-expression, and bold enough to challenge who the game is for.\n\nInstead of a standard golf crest, I drew the mark from the game itself: a Sankofa bird, the symbol of learning from the past to build the future.",
+      "sections": [
+        {"heading": "Overview", "body": "Black Irons Golf Group is a brand built for Black golfers, rooted in culture, community, and self-expression. The identity blends sharp detailing and elegant restraint to challenge who the game is for and redefine what belonging looks like—on and off the course."},
+        {"heading": "The mark", "body": "The symbol of the bird (Sankofa) highlighting the importance of learning from the past to build the future. Head of the bird is in the shape of a 9 iron. Neck of the body is in the shape of a golf swing. Feathers of the bird reflect the splay that comes from hitting in sand traps or on the fairway."}
+      ],
+      "links": [],
+      "original": {"cargo": "Black Irons Golf Group — Identity Design and Branding\n\nBlack Irons Golf Group is a brand built for Black golfers, rooted in culture, community, and self-expression. The identity blends sharp detailing and elegant restraint to challenge who the game is for and redefine what belonging looks like—on and off the course.", "mark_slide": "Text on black-irons-golf/Slide-16_9---10.png (the mark construction slide), transcribed."},
+      "blocks": [
+        {"kind": "full", "media": [{"src": "black-irons-golf/Slide-16_9---39.png", "alt": "The Black Irons Golf Group mark over a black-and-white photo of a golfer", "n": 4}]},
+        {"kind": "row", "media": [
+          {"src": "black-irons-golf/Slide-16_9---40.png", "alt": "Black Irons Golf mark", "n": 1},
+          {"src": "black-irons-golf/Slide-16_9---10.png", "alt": "How the Sankofa bird mark is built from a 9 iron, a golf swing and sand-trap splay", "n": 2}
+        ]},
+        {"kind": "full", "media": [{"src": "black-irons-golf/deck-logo-cream.png", "alt": "Black Irons Golf Group horizontal and stacked logos in dark green on cream", "n": "9a"}]},
+        {"kind": "full", "media": [{"src": "black-irons-golf/Slide-16_9---53-deck.png", "alt": "The bird mark inside a burst of angular shapes", "n": 3}]},
+        {"kind": "full", "media": [{"src": "black-irons-golf/deck-logo-green.png", "alt": "Black Irons Golf Group horizontal and stacked logos in cream on dark green", "n": "9b"}]},
+        {"kind": "row", "media": [
+          {"src": "black-irons-golf/Slide-16_9---42.png", "alt": "Black Irons Golf identity", "n": 5},
+          {"src": "black-irons-golf/GOLFBALLGRASS.png", "alt": "A branded golf ball on grass", "n": 7},
+          {"src": "black-irons-golf/Slide-16_9---41.png", "alt": "Black Irons Golf identity", "n": 8}
+        ]},
+        {"kind": "full", "media": [{"src": "black-irons-golf/MOCK-UP.png", "alt": "Black Irons Golf merchandise mockup", "n": 6}]}
+      ]
+    },
+    {
+      "slug": "partners-in-print",
+      "color": "#29A1B2",
+      "title": "Partners in Print",
+      "type": "Exhibition Design",
+      "year": "2024",
+      "team": ["Emily Watson", "Gerri Zhou", "Nathan Zonn"],
+      "role": "",
+      "card": {"src": "projects/partners-in-print/cover.jpg", "alt": "An overhead render of the BE BOLD exhibition space"},
+      "hero": {"src": "partners-in-print/storefront-1.jpg", "alt": "The Partners in Print storefront"},
+      "summary": "Partners in Print, a Seattle nonprofit, was moving into a new home in Belltown. After pitching their revitalization, our team imagined how its exterior and interior could come to life for the grand opening.\n\nBE BOLD reimagines letterpress as something big, physical and performative: a fictional steamroller and oversized floor prints turn the printing process into a spectacle.",
+      "sections": [
+        {"heading": "Overview", "body": "With a Seattle-based nonprofit organization moving into a new space, we conceptualized how the exterior and interior could come to life for their grand opening. BE BOLD is an exhibition concept for Partners in Print that reimagines letterpress as bold, physical, and performative. It is centered around a fictional steamroller and oversized floor prints that turn process into spectacle."}
+      ],
+      "links": [],
+      "original": {"cargo": "PARTNERS IN PRINT — Exhibition Design\nTeam: EMILY WATSON + Gerri Zhou + NATHAN ZONN\n\nWith a Seattle-based nonprofit organization moving into a new space, we conceptualized how the exterior and interior could come to life for their grand opening. BE BOLD is an exhibition concept for Partners in Print that reimagines letterpress as bold, physical, and performative. It is centered around a fictional steamroller and oversized floor prints that turn process into spectacle.", "brief": "Source: LaCie DOWNLOADS 11:20:25/Kristine Visual Presentation_Partners in Print.pdf: 'Project: New Headquarters for Partners in Print', '402 Cedar Street, Belltown', floor plan with gallery and sidewalk. Project files (Be Bold Presentation.key, plotter print template) are dated December 2024."},
+      "blocks": [
+        {"kind": "full", "media": [{"src": "partners-in-print/Frame-1.jpg", "alt": "An overhead render of the BE BOLD exhibition space", "n": 1}]},
+        {"kind": "row", "media": [
+          {"src": "partners-in-print/Frame-29.jpg", "alt": "Exhibition view", "n": 2},
+          {"src": "partners-in-print/image-213.png", "alt": "Exhibition view", "n": 3}
+        ]},
+        {"kind": "full", "media": [{"src": "partners-in-print/PIP8.jpg", "alt": "Exhibition interior", "n": 4}]},
+        {"kind": "full", "media": [{"src": "partners-in-print/PIP5.jpg", "alt": "Exhibition interior", "n": 5}]},
+        {"kind": "full", "media": [{"src": "partners-in-print/PARTNERS-IN-PRINT---landscape---cover.png", "alt": "Partners in Print title card", "n": 6}]}
+      ]
+    },
+    {
+      "slug": "rapport",
+      "color": "#58531F",
+      "title": "Rapport",
+      "type": "Store Rebranding",
+      "year": "2024",
+      "team": [],
+      "role": "",
+      "card": {"src": "projects/rapport/cover.jpg", "alt": "A line drawing of the Rapport storefront"},
+      "hero": {"src": "rapport/highres.jpg", "alt": "A line drawing of the Rapport storefront on textured paper"},
+      "summary": "Rapport is a self-pour wine and beer bar on Seattle's Capitol Hill, inspired by the art of conversation. The identity invites guests to slow down, share a moment and explore at their own pace.\n\nTwo patterns carry the brand: wine glasses that twist like grape vines, and beer glasses stacked like brick, a nod to the neighborhood. High-flash photography, with its hard shadow, echoes the logo's bold border.",
+      "sections": [
+        {"heading": "Overview", "body": "Rapport is a self-pour wine bar rooted in hospitality and connection. Inspired by the Pacific Northwest and built around community, the identity invites guests to slow down, share moments, and explore wine on their own terms."},
+        {"heading": "Background", "body": "The history of self-pour wine bars reflects a convergence of technological innovation, changing consumer preferences, and a desire for more interactive and immersive drinking experiences. Rapport reflects a relatively young history dating back to a recent 2020. However being such a young restaurant, and a staple in the Seattle area, Rapport has the opportunity to take risks, and be unconventional and daring in their identity."},
+        {"heading": "Patterns", "body": "The repeated wine glass pattern is shaped to reflect grape vines and create the complex look of the vines. The repeated beer glass pattern is shaped to reflect bricks as a nod to the Capitol Hill area where the store is located."},
+        {"heading": "Photography", "below": true, "body": "Photos of people should have a unique look. This can be done with a simple point and shoot camera using flash. This look is known as high flash. The style of this is chosen because of the dark shadow that falls out the back of the photo, mimicking the bold border line in the logo. When using photos of places or things for adverts, a color filter should be applied. Adding a core supporting color over the photo allows the viewer to see the photo but also reestablishes the brand colors."}
+      ],
+      "links": [],
+      "original": {"cargo": "Rapport — Store Rebranding\n\nRapport is a self-pour wine bar rooted in hospitality and connection. Inspired by the Pacific Northwest and built around community, the identity invites guests to slow down, share moments, and explore wine on their own terms.", "identity_manual": "Source: LaCie DOWNLOADS 11:20:25/Rapport/3 identity manual/rapport identity manual.pdf, pages 3, 4, 22 and 24. Positioning statement (shown on the page until 2026-10-25): Rapport endeavors to redefine the landscape of dining in Seattle by offering a unique self-pour wine and beer experience that seamlessly blends leisure with sophistication. Our mission is to create an atmosphere where patrons can savor high-quality libations at their own pace, surrounded by an ambiance that exudes warmth and refinement. Inspired by the art of conversation, Rapport aims to cultivate an environment where every visit becomes an unforgettable journey of taste and memories. With a commitment to delivering exceptional wines, beer and a vibrant atmosphere, Rapport invites guests to indulge in a culinary experience that transcends the ordinary, fostering lasting connections and memorable moments. Just as every pour tells a story, Rapport strives to create an enduring legacy of culinary excellence and conviviality that resonates with patrons, both now and in the future. Key words: warm, flowy, smile, natural, conversational, people, connection, refined, talking."},
+      "blocks": [
+        {"kind": "full", "media": [{"src": "rapport/rapport-pattern-stamp-wide.png", "alt": "The Rapport pint-glass pattern in olive on warm white, stamped with the RAPPORT logo in red, as a wide banner", "n": "10b"}]},
+        {"kind": "row", "media": [
+          {"src": "rapport/rapport-icon-reel-square.gif", "alt": "Animation: Rapport's pint glass, wine glass and logo cutting one after another in orange, wine red and olive on cream", "n": 1, "protect": true},
+          {"src": "rapport/rapport-dancefloor-square.png", "alt": "A man in a red paisley shirt dancing with a drink in hand, lit by camera flash", "n": 12, "protect": true}
+        ]},
+        {"kind": "full", "media": [{"src": "rapport/rapport-taproom.png", "alt": "Guests rushing past a wall of self-pour taps while one pours a beer, blurred with motion", "n": 5, "protect": true}]},
+        {"kind": "row", "media": [
+          {"src": "rapport/wine-1-coaster.png", "alt": "Wine coaster", "n": 8},
+          {"src": "rapport/rapport-hat-profile.png", "alt": "A smiling man in profile wearing a black bucket hat lined with the Rapport pattern", "n": 14, "protect": true}
+        ]},
+        {"kind": "full", "media": [{"src": "rapport/rapport-pattern-fill-wide.gif", "alt": "Animation: the pint-glass pattern filling the frame glass by glass", "n": 11}]},
+        {"kind": "row", "media": [
+          {"src": "rapport/rapport-chef-presenting.png", "alt": "A smiling chef in a rust apron presenting a plated salad at the pass of a busy kitchen", "n": 13, "protect": true},
+          {"src": "rapport/coasterbeer.png", "alt": "Beer coaster", "n": 9}
+        ]},
+        {"kind": "full", "media": [{"src": "rapport/card-wide.jpg", "alt": "Rapport card", "n": 7}]},
+        {"kind": "full", "media": [{"src": "rapport/image-28.png", "alt": "Rapport identity", "n": 2}]}
+      ]
+    },
+    {
+      "slug": "loosely",
+      "color": "#1282EA",
+      "title": "Loosely",
+      "type": "UI/UX App Design",
+      "year": "",
+      "team": [],
+      "role": "",
+      "card": {"src": "projects/loosely/cover.mp4", "poster": "projects/loosely/poster.jpg", "alt": "Loosely app screens"},
+      "hero": {"src": "loosely-app-design/Screen-Recording-2026-04-18-at-10.47.45-AM.mov", "alt": "Loosely app walkthrough"},
+      "summary": "Loosely is a concert companion app concept designed to make planning a night out with friends feel like part of the experience. Between meeting up, finding your seats, and keeping everyone on the same page, there's a lot to coordinate before the music even starts.\n\nThe app brings everything together through shared plans, personalized itineraries, and navigation through a paired watch. I wanted to make the moments leading up to a concert feel just as exciting as the show itself.",
+      "sections": [
+        {"heading": "Project introduction", "body": "Going to a concert with friends means more than just showing up for the music. Between making plans, finding your seats, and keeping everyone on the same page, there's a whole night to coordinate.\n\nLoosely is a concert companion app concept that brings those plans together through personalized itineraries, shared reminders, and navigation. I wanted to make the anticipation and preparation feel just as much a part of the experience as the concert itself."},
+        {"heading": "Seat navigation", "body": "Paired with a watch, Loosely provides real-time directions from your current location to your next destination, including your seat inside the venue."},
+        {"heading": "Keeping everyone in sync", "body": "As each part of the itinerary approaches, the group receives a reminder and can follow the map to wherever they're headed next."}
+      ],
+      "links": [],
+      "original": {"cargo": "Loosely — UI/UX app design\n\nProblem: Concerts demand the same kind of coordination as a team event, but fans are left to figure it out on their own.\nSolution:\nLoosely is a concert companion app that centralizes planning, personalizes the itinerary, and brings the group together before the night even starts.\n\nThe design goal: Make preparation feel like part of the experience.\n\nSeat navigation\n\nWith a paired watch, you can get to your next location or even your venue seats at the concert with real-time directions based on your current location.\n\nKnow what's next and where to go\n\nWhen the time reaches a new event time slot, the group will get a notification and can navigate to the place with the map"},
+      "blocks": [
+        {"kind": "full", "media": [{"src": "loosely-app-design/Slide-16_9---2.png", "alt": "Loosely overview", "n": 1}]},
+        {"kind": "full", "media": [{"src": "loosely-app-design/1y3xJhRxQaBu8S8VCbrDN8vSMU.mp4", "alt": "Loosely screen recording", "n": 2}]},
+        {"kind": "row", "media": [
+          {"src": "loosely-app-design/Group-253.png", "alt": "Loosely watch and phone screens", "n": 4},
+          {"src": "loosely-app-design/video1.mp4", "alt": "Map directions to the venue", "n": 6},
+          {"src": "loosely-app-design/video-2.mp4", "alt": "Apple Watch seat navigation", "n": 5, "inset": 0.62, "frame": true}
+        ]}
+      ]
+    }
+  ]
+}

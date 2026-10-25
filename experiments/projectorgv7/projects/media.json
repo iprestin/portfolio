@@ -1,0 +1,1555 @@
+{
+ "where-champions-are-made-1/champions-entrance-over-hang-cover.png": {
+  "kind": "image",
+  "w": 2040,
+  "h": 1418,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "champions-entrance-over-hang-cover-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "champions-entrance-over-hang-cover-1600.jpg"
+   },
+   {
+    "w": 2040,
+    "file": "champions-entrance-over-hang-cover-2040.jpg"
+   }
+  ],
+  "base": "projects/where-champions-are-made/media/"
+ },
+ "where-champions-are-made-1/SYMBOLS-W-BACKGROUN.png": {
+  "kind": "image",
+  "w": 1920,
+  "h": 1080,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "SYMBOLS-W-BACKGROUN-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "SYMBOLS-W-BACKGROUN-1600.jpg"
+   },
+   {
+    "w": 1920,
+    "file": "SYMBOLS-W-BACKGROUN-1920.jpg"
+   }
+  ],
+  "base": "projects/where-champions-are-made/media/"
+ },
+ "where-champions-are-made-1/Asset-1.png": {
+  "kind": "image",
+  "w": 569,
+  "h": 569,
+  "sizes": [
+   {
+    "w": 569,
+    "file": "Asset-1-569.png"
+   }
+  ],
+  "base": "projects/where-champions-are-made/media/"
+ },
+ "where-champions-are-made-1/friday-3.jpg": {
+  "kind": "image",
+  "w": 14105,
+  "h": 5931,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "friday-3-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "friday-3-1600.jpg"
+   },
+   {
+    "w": 2400,
+    "file": "friday-3-2400.jpg"
+   }
+  ],
+  "base": "projects/where-champions-are-made/media/"
+ },
+ "where-champions-are-made-1/signage-mockup.png": {
+  "kind": "image",
+  "w": 1536,
+  "h": 1024,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "signage-mockup-800.jpg"
+   },
+   {
+    "w": 1536,
+    "file": "signage-mockup-1536.jpg"
+   }
+  ],
+  "base": "projects/where-champions-are-made/media/"
+ },
+ "where-champions-are-made-1/Group-171.png": {
+  "kind": "image",
+  "w": 1920,
+  "h": 1080,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "Group-171-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "Group-171-1600.jpg"
+   },
+   {
+    "w": 1920,
+    "file": "Group-171-1920.jpg"
+   }
+  ],
+  "base": "projects/where-champions-are-made/media/"
+ },
+ "where-champions-are-made-1/702.jpg": {
+  "kind": "image",
+  "w": 12991,
+  "h": 7308,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "702-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "702-1600.jpg"
+   },
+   {
+    "w": 2400,
+    "file": "702-2400.jpg"
+   }
+  ],
+  "base": "projects/where-champions-are-made/media/"
+ },
+ "where-champions-are-made-1/Screen-Recording-2026-05-08-at-10.29.24-AM.mov": {
+  "kind": "video",
+  "w": 2400,
+  "h": 822,
+  "mp4": "Screen-Recording-2026-05-08-at-10.29.24-AM.mp4",
+  "poster": "Screen-Recording-2026-05-08-at-10.29.24-AM-poster.jpg",
+  "base": "projects/where-champions-are-made/media/"
+ },
+ "rapport/highres.jpg": {
+  "kind": "image",
+  "w": 5120,
+  "h": 2880,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "highres-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "highres-1600.jpg"
+   },
+   {
+    "w": 2400,
+    "file": "highres-2400.jpg"
+   }
+  ],
+  "base": "projects/rapport/media/"
+ },
+ "rapport/image-28.png": {
+  "kind": "image",
+  "w": 1689,
+  "h": 1233,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "image-28-800.png"
+   },
+   {
+    "w": 1600,
+    "file": "image-28-1600.png"
+   },
+   {
+    "w": 1689,
+    "file": "image-28-1689.png"
+   }
+  ],
+  "base": "projects/rapport/media/"
+ },
+ "rapport/post-rappoer.png": {
+  "kind": "image",
+  "w": 3340,
+  "h": 2132,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "post-rappoer-800.png"
+   },
+   {
+    "w": 1600,
+    "file": "post-rappoer-1600.png"
+   },
+   {
+    "w": 2400,
+    "file": "post-rappoer-2400.png"
+   }
+  ],
+  "base": "projects/rapport/media/"
+ },
+ "rapport/story-rapport.png": {
+  "kind": "image",
+  "w": 3032,
+  "h": 1752,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "story-rapport-800.png"
+   },
+   {
+    "w": 1600,
+    "file": "story-rapport-1600.png"
+   },
+   {
+    "w": 2400,
+    "file": "story-rapport-2400.png"
+   }
+  ],
+  "base": "projects/rapport/media/"
+ },
+ "rapport/Group-34.png": {
+  "kind": "image",
+  "w": 2296,
+  "h": 1169,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "Group-34-800.png"
+   },
+   {
+    "w": 1600,
+    "file": "Group-34-1600.png"
+   },
+   {
+    "w": 2296,
+    "file": "Group-34-2296.png"
+   }
+  ],
+  "base": "projects/rapport/media/"
+ },
+ "rapport/card.jpg": {
+  "kind": "image",
+  "w": 3840,
+  "h": 2160,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "card-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "card-1600.jpg"
+   },
+   {
+    "w": 2400,
+    "file": "card-2400.jpg"
+   }
+  ],
+  "base": "projects/rapport/media/"
+ },
+ "rapport/wine-1-coaster.png": {
+  "kind": "image",
+  "w": 1208,
+  "h": 968,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "wine-1-coaster-800.jpg"
+   },
+   {
+    "w": 1208,
+    "file": "wine-1-coaster-1208.jpg"
+   }
+  ],
+  "base": "projects/rapport/media/"
+ },
+ "rapport/coasterbeer.png": {
+  "kind": "image",
+  "w": 1208,
+  "h": 964,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "coasterbeer-800.jpg"
+   },
+   {
+    "w": 1208,
+    "file": "coasterbeer-1208.jpg"
+   }
+  ],
+  "base": "projects/rapport/media/"
+ },
+ "partners-in-print/storefront-1.jpg": {
+  "kind": "image",
+  "w": 3840,
+  "h": 2160,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "storefront-1-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "storefront-1-1600.jpg"
+   },
+   {
+    "w": 2400,
+    "file": "storefront-1-2400.jpg"
+   }
+  ],
+  "base": "projects/partners-in-print/media/"
+ },
+ "partners-in-print/Frame-1.jpg": {
+  "kind": "image",
+  "w": 3942,
+  "h": 2551,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "Frame-1-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "Frame-1-1600.jpg"
+   },
+   {
+    "w": 2400,
+    "file": "Frame-1-2400.jpg"
+   }
+  ],
+  "base": "projects/partners-in-print/media/"
+ },
+ "partners-in-print/Frame-29.jpg": {
+  "kind": "image",
+  "w": 3843,
+  "h": 2487,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "Frame-29-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "Frame-29-1600.jpg"
+   },
+   {
+    "w": 2400,
+    "file": "Frame-29-2400.jpg"
+   }
+  ],
+  "base": "projects/partners-in-print/media/"
+ },
+ "partners-in-print/image-213.png": {
+  "kind": "image",
+  "w": 3925,
+  "h": 2618,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "image-213-800.png"
+   },
+   {
+    "w": 1600,
+    "file": "image-213-1600.png"
+   },
+   {
+    "w": 2400,
+    "file": "image-213-2400.png"
+   }
+  ],
+  "base": "projects/partners-in-print/media/"
+ },
+ "partners-in-print/PIP8.jpg": {
+  "kind": "image",
+  "w": 3942,
+  "h": 2218,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "PIP8-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "PIP8-1600.jpg"
+   },
+   {
+    "w": 2400,
+    "file": "PIP8-2400.jpg"
+   }
+  ],
+  "base": "projects/partners-in-print/media/"
+ },
+ "partners-in-print/PIP5.jpg": {
+  "kind": "image",
+  "w": 3843,
+  "h": 2164,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "PIP5-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "PIP5-1600.jpg"
+   },
+   {
+    "w": 2400,
+    "file": "PIP5-2400.jpg"
+   }
+  ],
+  "base": "projects/partners-in-print/media/"
+ },
+ "partners-in-print/PARTNERS-IN-PRINT---landscape---cover.png": {
+  "kind": "image",
+  "w": 1280,
+  "h": 720,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "PARTNERS-IN-PRINT---landscape---cover-800.jpg"
+   },
+   {
+    "w": 1280,
+    "file": "PARTNERS-IN-PRINT---landscape---cover-1280.jpg"
+   }
+  ],
+  "base": "projects/partners-in-print/media/"
+ },
+ "black-irons-golf/Slide-16_9---39.png": {
+  "kind": "image",
+  "w": 1750,
+  "h": 921,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "Slide-16_9---39-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "Slide-16_9---39-1600.jpg"
+   },
+   {
+    "w": 1750,
+    "file": "Slide-16_9---39-1750.jpg"
+   }
+  ],
+  "base": "projects/black-irons-golf/media/"
+ },
+ "black-irons-golf/Slide-16_9---10.png": {
+  "kind": "image",
+  "w": 1920,
+  "h": 1080,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "Slide-16_9---10-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "Slide-16_9---10-1600.jpg"
+   },
+   {
+    "w": 1920,
+    "file": "Slide-16_9---10-1920.jpg"
+   }
+  ],
+  "base": "projects/black-irons-golf/media/"
+ },
+ "black-irons-golf/Frame-39.png": {
+  "kind": "image",
+  "w": 1750,
+  "h": 922,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "Frame-39-800.png"
+   },
+   {
+    "w": 1600,
+    "file": "Frame-39-1600.png"
+   },
+   {
+    "w": 1750,
+    "file": "Frame-39-1750.png"
+   }
+  ],
+  "base": "projects/black-irons-golf/media/"
+ },
+ "black-irons-golf/Slide-16_9---53.png": {
+  "kind": "image",
+  "w": 888,
+  "h": 500,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "Slide-16_9---53-800.png"
+   },
+   {
+    "w": 888,
+    "file": "Slide-16_9---53-888.png"
+   }
+  ],
+  "base": "projects/black-irons-golf/media/"
+ },
+ "black-irons-golf/Slide-16_9---42.png": {
+  "kind": "image",
+  "w": 5760,
+  "h": 3240,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "Slide-16_9---42-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "Slide-16_9---42-1600.jpg"
+   },
+   {
+    "w": 2400,
+    "file": "Slide-16_9---42-2400.jpg"
+   }
+  ],
+  "base": "projects/black-irons-golf/media/"
+ },
+ "black-irons-golf/MOCK-UP.png": {
+  "kind": "image",
+  "w": 4068,
+  "h": 2259,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "MOCK-UP-800.png"
+   },
+   {
+    "w": 1600,
+    "file": "MOCK-UP-1600.png"
+   },
+   {
+    "w": 2400,
+    "file": "MOCK-UP-2400.png"
+   }
+  ],
+  "base": "projects/black-irons-golf/media/"
+ },
+ "black-irons-golf/GOLFBALLGRASS.png": {
+  "kind": "image",
+  "w": 5760,
+  "h": 3240,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "GOLFBALLGRASS-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "GOLFBALLGRASS-1600.jpg"
+   },
+   {
+    "w": 2400,
+    "file": "GOLFBALLGRASS-2400.jpg"
+   }
+  ],
+  "base": "projects/black-irons-golf/media/"
+ },
+ "black-irons-golf/Slide-16_9---41.png": {
+  "kind": "image",
+  "w": 5760,
+  "h": 3240,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "Slide-16_9---41-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "Slide-16_9---41-1600.jpg"
+   },
+   {
+    "w": 2400,
+    "file": "Slide-16_9---41-2400.jpg"
+   }
+  ],
+  "base": "projects/black-irons-golf/media/"
+ },
+ "black-irons-golf/Slide-16_9---40.png": {
+  "kind": "image",
+  "w": 1041,
+  "h": 586,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "Slide-16_9---40-800.png"
+   },
+   {
+    "w": 1041,
+    "file": "Slide-16_9---40-1041.png"
+   }
+  ],
+  "base": "projects/black-irons-golf/media/"
+ },
+ "share-a-smile/artisSAS-29.jpg": {
+  "kind": "image",
+  "w": 5184,
+  "h": 3456,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "artisSAS-29-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "artisSAS-29-1600.jpg"
+   },
+   {
+    "w": 2400,
+    "file": "artisSAS-29-2400.jpg"
+   }
+  ],
+  "base": "projects/share-a-smile/media/"
+ },
+ "share-a-smile/Asset-54x-100.jpg": {
+  "kind": "image",
+  "w": 6407,
+  "h": 3479,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "Asset-54x-100-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "Asset-54x-100-1600.jpg"
+   },
+   {
+    "w": 2400,
+    "file": "Asset-54x-100-2400.jpg"
+   }
+  ],
+  "base": "projects/share-a-smile/media/"
+ },
+ "share-a-smile/artisSAS-26.jpg": {
+  "kind": "image",
+  "w": 3456,
+  "h": 5184,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "artisSAS-26-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "artisSAS-26-1600.jpg"
+   },
+   {
+    "w": 2400,
+    "file": "artisSAS-26-2400.jpg"
+   }
+  ],
+  "base": "projects/share-a-smile/media/"
+ },
+ "share-a-smile/artisSAS-11.jpg": {
+  "kind": "image",
+  "w": 3456,
+  "h": 5184,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "artisSAS-11-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "artisSAS-11-1600.jpg"
+   },
+   {
+    "w": 2400,
+    "file": "artisSAS-11-2400.jpg"
+   }
+  ],
+  "base": "projects/share-a-smile/media/"
+ },
+ "share-a-smile/artisSAS-1.jpg": {
+  "kind": "image",
+  "w": 3456,
+  "h": 5184,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "artisSAS-1-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "artisSAS-1-1600.jpg"
+   },
+   {
+    "w": 2400,
+    "file": "artisSAS-1-2400.jpg"
+   }
+  ],
+  "base": "projects/share-a-smile/media/"
+ },
+ "share-a-smile/shareasmileinsta.jpg": {
+  "kind": "image",
+  "w": 7680,
+  "h": 4320,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "shareasmileinsta-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "shareasmileinsta-1600.jpg"
+   },
+   {
+    "w": 2400,
+    "file": "shareasmileinsta-2400.jpg"
+   }
+  ],
+  "base": "projects/share-a-smile/media/"
+ },
+ "share-a-smile/Slide-16_9---16.jpg": {
+  "kind": "image",
+  "w": 7680,
+  "h": 4320,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "Slide-16_9---16-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "Slide-16_9---16-1600.jpg"
+   },
+   {
+    "w": 2400,
+    "file": "Slide-16_9---16-2400.jpg"
+   }
+  ],
+  "base": "projects/share-a-smile/media/"
+ },
+ "share-a-smile/Asset-64x-100.jpg": {
+  "kind": "image",
+  "w": 6430,
+  "h": 3367,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "Asset-64x-100-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "Asset-64x-100-1600.jpg"
+   },
+   {
+    "w": 2400,
+    "file": "Asset-64x-100-2400.jpg"
+   }
+  ],
+  "base": "projects/share-a-smile/media/"
+ },
+ "share-a-smile/samsasvideo-ezgif.com-optimize.gif": {
+  "kind": "image",
+  "w": 800,
+  "h": 1198,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "samsasvideo-ezgif.com-optimize.gif"
+   }
+  ],
+  "animated": true,
+  "base": "projects/share-a-smile/media/"
+ },
+ "share-a-smile/Asset-34x-100.jpg": {
+  "kind": "image",
+  "w": 2052,
+  "h": 1368,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "Asset-34x-100-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "Asset-34x-100-1600.jpg"
+   },
+   {
+    "w": 2052,
+    "file": "Asset-34x-100-2052.jpg"
+   }
+  ],
+  "base": "projects/share-a-smile/media/"
+ },
+ "loosely-app-design/Screen-Recording-2026-04-18-at-10.47.45-AM.mov": {
+  "kind": "video",
+  "w": 2640,
+  "h": 1484,
+  "mp4": "Screen-Recording-2026-04-18-at-10.47.45-AM.mp4",
+  "poster": "Screen-Recording-2026-04-18-at-10.47.45-AM-poster.jpg",
+  "base": "projects/loosely/media/"
+ },
+ "loosely-app-design/Slide-16_9---2.png": {
+  "kind": "image",
+  "w": 1920,
+  "h": 1080,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "Slide-16_9---2-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "Slide-16_9---2-1600.jpg"
+   },
+   {
+    "w": 1920,
+    "file": "Slide-16_9---2-1920.jpg"
+   }
+  ],
+  "base": "projects/loosely/media/"
+ },
+ "loosely-app-design/Frame-29.jpg": {
+  "kind": "image",
+  "w": 3843,
+  "h": 2487,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "Frame-29-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "Frame-29-1600.jpg"
+   },
+   {
+    "w": 2400,
+    "file": "Frame-29-2400.jpg"
+   }
+  ],
+  "base": "projects/loosely/media/"
+ },
+ "loosely-app-design/image-213.png": {
+  "kind": "image",
+  "w": 3925,
+  "h": 2618,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "image-213-800.png"
+   },
+   {
+    "w": 1600,
+    "file": "image-213-1600.png"
+   },
+   {
+    "w": 2400,
+    "file": "image-213-2400.png"
+   }
+  ],
+  "base": "projects/loosely/media/"
+ },
+ "loosely-app-design/1y3xJhRxQaBu8S8VCbrDN8vSMU.mp4": {
+  "kind": "video",
+  "w": 2280,
+  "h": 1480,
+  "mp4": "1y3xJhRxQaBu8S8VCbrDN8vSMU.mp4",
+  "poster": "1y3xJhRxQaBu8S8VCbrDN8vSMU-poster.jpg",
+  "base": "projects/loosely/media/"
+ },
+ "loosely-app-design/Group-7.png": {
+  "kind": "image",
+  "w": 3370,
+  "h": 2118,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "Group-7-800.png"
+   },
+   {
+    "w": 1600,
+    "file": "Group-7-1600.png"
+   },
+   {
+    "w": 2400,
+    "file": "Group-7-2400.png"
+   }
+  ],
+  "base": "projects/loosely/media/"
+ },
+ "loosely-app-design/Group-253.png": {
+  "kind": "image",
+  "w": 998,
+  "h": 1628,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "Group-253-800.png"
+   },
+   {
+    "w": 998,
+    "file": "Group-253-998.png"
+   }
+  ],
+  "base": "projects/loosely/media/"
+ },
+ "loosely-app-design/video-2.mp4": {
+  "kind": "video",
+  "w": 1218,
+  "h": 1480,
+  "mp4": "video-2.mp4",
+  "poster": "video-2-poster.jpg",
+  "base": "projects/loosely/media/"
+ },
+ "loosely-app-design/video1.mp4": {
+  "kind": "video",
+  "w": 684,
+  "h": 1480,
+  "mp4": "video1.mp4",
+  "poster": "video1-poster.jpg",
+  "base": "projects/loosely/media/"
+ },
+ "where-champions-are-made-1/before-entrance.jpg": {
+  "kind": "image",
+  "w": 1334,
+  "h": 928,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "before-entrance-800.jpg"
+   },
+   {
+    "w": 1334,
+    "file": "before-entrance-1334.jpg"
+   }
+  ],
+  "base": "projects/where-champions-are-made/media/"
+ },
+ "where-champions-are-made-1/before-navigation.jpg": {
+  "kind": "image",
+  "w": 1334,
+  "h": 928,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "before-navigation-800.jpg"
+   },
+   {
+    "w": 1334,
+    "file": "before-navigation-1334.jpg"
+   }
+  ],
+  "base": "projects/where-champions-are-made/media/"
+ },
+ "where-champions-are-made-1/before-court-entrance.jpg": {
+  "kind": "image",
+  "w": 1334,
+  "h": 928,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "before-court-entrance-800.jpg"
+   },
+   {
+    "w": 1334,
+    "file": "before-court-entrance-1334.jpg"
+   }
+  ],
+  "base": "projects/where-champions-are-made/media/"
+ },
+ "where-champions-are-made-1/early-picto.jpg": {
+  "kind": "image",
+  "w": 1920,
+  "h": 1080,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "early-picto-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "early-picto-1600.jpg"
+   },
+   {
+    "w": 1920,
+    "file": "early-picto-1920.jpg"
+   }
+  ],
+  "base": "projects/where-champions-are-made/media/"
+ },
+ "where-champions-are-made-1/pictogram-grid.jpg": {
+  "kind": "image",
+  "w": 2400,
+  "h": 2400,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "pictogram-grid-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "pictogram-grid-1600.jpg"
+   },
+   {
+    "w": 2400,
+    "file": "pictogram-grid-2400.jpg"
+   }
+  ],
+  "base": "projects/where-champions-are-made/media/"
+ },
+ "where-champions-are-made-1/washington.png": {
+  "kind": "image",
+  "w": 1686,
+  "h": 236,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "washington-800.png"
+   },
+   {
+    "w": 1600,
+    "file": "washington-1600.png"
+   },
+   {
+    "w": 1686,
+    "file": "washington-1686.png"
+   }
+  ],
+  "base": "projects/where-champions-are-made/media/"
+ },
+ "where-champions-are-made-1/bow-down-wall.jpg": {
+  "kind": "image",
+  "w": 2254,
+  "h": 1024,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "bow-down-wall-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "bow-down-wall-1600.jpg"
+   },
+   {
+    "w": 2254,
+    "file": "bow-down-wall-2254.jpg"
+   }
+  ],
+  "base": "projects/where-champions-are-made/media/"
+ },
+ "where-champions-are-made-1/washington-wall.jpg": {
+  "kind": "image",
+  "w": 1536,
+  "h": 1024,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "washington-wall-800.jpg"
+   },
+   {
+    "w": 1536,
+    "file": "washington-wall-1536.jpg"
+   }
+  ],
+  "base": "projects/where-champions-are-made/media/"
+ },
+ "where-champions-are-made-1/academic-center-w.jpg": {
+  "kind": "image",
+  "w": 1920,
+  "h": 1080,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "academic-center-w-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "academic-center-w-1600.jpg"
+   },
+   {
+    "w": 1920,
+    "file": "academic-center-w-1920.jpg"
+   }
+  ],
+  "base": "projects/where-champions-are-made/media/"
+ },
+ "where-champions-are-made-1/lanyards.jpg": {
+  "kind": "image",
+  "w": 1280,
+  "h": 720,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "lanyards-800.jpg"
+   },
+   {
+    "w": 1280,
+    "file": "lanyards-1280.jpg"
+   }
+  ],
+  "base": "projects/where-champions-are-made/media/"
+ },
+ "where-champions-are-made-1/huskies-glass.jpg": {
+  "kind": "image",
+  "w": 2400,
+  "h": 1362,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "huskies-glass-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "huskies-glass-1600.jpg"
+   },
+   {
+    "w": 2400,
+    "file": "huskies-glass-2400.jpg"
+   }
+  ],
+  "base": "projects/where-champions-are-made/media/"
+ },
+ "where-champions-are-made-1/washington-ng-detail.png": {
+  "kind": "image",
+  "w": 386,
+  "h": 236,
+  "sizes": [
+   {
+    "w": 386,
+    "file": "washington-ng-detail-386.png"
+   }
+  ],
+  "base": "projects/where-champions-are-made/media/"
+ },
+ "rapport/rapport-hat-profile.png": {
+  "kind": "image",
+  "w": 1323,
+  "h": 1189,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "rapport-hat-profile-800.jpg"
+   },
+   {
+    "w": 1323,
+    "file": "rapport-hat-profile-1323.jpg"
+   }
+  ],
+  "base": "projects/rapport/media/"
+ },
+ "where-champions-are-made-1/washington-ng-detail-rebuild.png": {
+  "kind": "image",
+  "w": 1544,
+  "h": 944,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "washington-ng-detail-rebuild-800.jpg"
+   },
+   {
+    "w": 1544,
+    "file": "washington-ng-detail-rebuild-1544.jpg"
+   }
+  ],
+  "base": "projects/where-champions-are-made/media/"
+ },
+ "rapport/rapport-chef-plating.png": {
+  "kind": "image",
+  "w": 1122,
+  "h": 1402,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "rapport-chef-plating-800.jpg"
+   },
+   {
+    "w": 1122,
+    "file": "rapport-chef-plating-1122.jpg"
+   }
+  ],
+  "base": "projects/rapport/media/"
+ },
+ "rapport/rapport-chef-presenting.png": {
+  "kind": "image",
+  "w": 1024,
+  "h": 1535,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "rapport-chef-presenting-800.jpg"
+   },
+   {
+    "w": 1024,
+    "file": "rapport-chef-presenting-1024.jpg"
+   }
+  ],
+  "base": "projects/rapport/media/"
+ },
+ "rapport/rapport-dancefloor.png": {
+  "kind": "image",
+  "w": 958,
+  "h": 1642,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "rapport-dancefloor-800.jpg"
+   },
+   {
+    "w": 958,
+    "file": "rapport-dancefloor-958.jpg"
+   }
+  ],
+  "base": "projects/rapport/media/"
+ },
+ "rapport/rapport-pattern-stamp.png": {
+  "kind": "image",
+  "w": 2400,
+  "h": 1350,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "rapport-pattern-stamp-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "rapport-pattern-stamp-1600.jpg"
+   },
+   {
+    "w": 2400,
+    "file": "rapport-pattern-stamp-2400.jpg"
+   }
+  ],
+  "base": "projects/rapport/media/"
+ },
+ "rapport/rapport-pattern-fill.gif": {
+  "kind": "image",
+  "w": 1600,
+  "h": 900,
+  "sizes": [
+   {
+    "w": 1600,
+    "file": "rapport-pattern-fill.gif"
+   }
+  ],
+  "animated": true,
+  "base": "projects/rapport/media/"
+ },
+ "rapport/rapport-icon-reel.gif": {
+  "kind": "image",
+  "w": 2400,
+  "h": 1350,
+  "sizes": [
+   {
+    "w": 2400,
+    "file": "rapport-icon-reel.gif"
+   }
+  ],
+  "animated": true,
+  "base": "projects/rapport/media/"
+ },
+ "rapport/rapport-taproom.png": {
+  "kind": "image",
+  "w": 1484,
+  "h": 1060,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "rapport-taproom-800.jpg"
+   },
+   {
+    "w": 1484,
+    "file": "rapport-taproom-1484.jpg"
+   }
+  ],
+  "base": "projects/rapport/media/"
+ },
+ "rapport/rapport-pattern-stamp-wide.png": {
+  "kind": "image",
+  "w": 2400,
+  "h": 955,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "rapport-pattern-stamp-wide-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "rapport-pattern-stamp-wide-1600.jpg"
+   },
+   {
+    "w": 2400,
+    "file": "rapport-pattern-stamp-wide-2400.jpg"
+   }
+  ],
+  "base": "projects/rapport/media/"
+ },
+ "rapport/rapport-icon-reel-square.gif": {
+  "kind": "image",
+  "w": 1600,
+  "h": 1600,
+  "sizes": [
+   {
+    "w": 1600,
+    "file": "rapport-icon-reel-square.gif"
+   }
+  ],
+  "animated": true,
+  "base": "projects/rapport/media/"
+ },
+ "rapport/rapport-dancefloor-square.png": {
+  "kind": "image",
+  "w": 958,
+  "h": 958,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "rapport-dancefloor-square-800.jpg"
+   },
+   {
+    "w": 958,
+    "file": "rapport-dancefloor-square-958.jpg"
+   }
+  ],
+  "base": "projects/rapport/media/"
+ },
+ "rapport/rapport-pattern-fill-wide.gif": {
+  "kind": "image",
+  "w": 2400,
+  "h": 1242,
+  "sizes": [
+   {
+    "w": 2400,
+    "file": "rapport-pattern-fill-wide.gif"
+   }
+  ],
+  "animated": true,
+  "base": "projects/rapport/media/"
+ },
+ "rapport/card-wide.jpg": {
+  "kind": "image",
+  "w": 3816,
+  "h": 1974,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "card-wide-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "card-wide-1600.jpg"
+   },
+   {
+    "w": 2400,
+    "file": "card-wide-2400.jpg"
+   }
+  ],
+  "base": "projects/rapport/media/"
+ },
+ "black-irons-golf/Slide-16_9---53-enlarged.png": {
+  "kind": "image",
+  "w": 1776,
+  "h": 1000,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "Slide-16_9---53-enlarged-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "Slide-16_9---53-enlarged-1600.jpg"
+   },
+   {
+    "w": 1776,
+    "file": "Slide-16_9---53-enlarged-1776.jpg"
+   }
+  ],
+  "base": "projects/black-irons-golf/media/"
+ },
+ "black-irons-golf/Slide-16_9---53-1920.png": {
+  "kind": "image",
+  "w": 1920,
+  "h": 1080,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "Slide-16_9---53-1920-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "Slide-16_9---53-1920-1600.jpg"
+   },
+   {
+    "w": 1920,
+    "file": "Slide-16_9---53-1920-1920.jpg"
+   }
+  ],
+  "base": "projects/black-irons-golf/media/"
+ },
+ "black-irons-golf/Slide-16_9---53-deck.png": {
+  "kind": "image",
+  "w": 2400,
+  "h": 1350,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "Slide-16_9---53-deck-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "Slide-16_9---53-deck-1600.jpg"
+   },
+   {
+    "w": 2400,
+    "file": "Slide-16_9---53-deck-2400.jpg"
+   }
+  ],
+  "base": "projects/black-irons-golf/media/"
+ },
+ "black-irons-golf/deck-logo-system.png": {
+  "kind": "image",
+  "w": 2400,
+  "h": 972,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "deck-logo-system-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "deck-logo-system-1600.jpg"
+   },
+   {
+    "w": 2400,
+    "file": "deck-logo-system-2400.jpg"
+   }
+  ],
+  "base": "projects/black-irons-golf/media/"
+ },
+ "black-irons-golf/deck-social-website.png": {
+  "kind": "image",
+  "w": 2400,
+  "h": 1159,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "deck-social-website-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "deck-social-website-1600.jpg"
+   },
+   {
+    "w": 2400,
+    "file": "deck-social-website-2400.jpg"
+   }
+  ],
+  "base": "projects/black-irons-golf/media/"
+ },
+ "black-irons-golf/deck-business-cards.png": {
+  "kind": "image",
+  "w": 2400,
+  "h": 2003,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "deck-business-cards-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "deck-business-cards-1600.jpg"
+   },
+   {
+    "w": 2400,
+    "file": "deck-business-cards-2400.jpg"
+   }
+  ],
+  "base": "projects/black-irons-golf/media/"
+ },
+ "black-irons-golf/deck-logo-cream.png": {
+  "kind": "image",
+  "w": 2400,
+  "h": 442,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "deck-logo-cream-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "deck-logo-cream-1600.jpg"
+   },
+   {
+    "w": 2400,
+    "file": "deck-logo-cream-2400.jpg"
+   }
+  ],
+  "base": "projects/black-irons-golf/media/"
+ },
+ "black-irons-golf/deck-logo-green.png": {
+  "kind": "image",
+  "w": 2400,
+  "h": 438,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "deck-logo-green-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "deck-logo-green-1600.jpg"
+   },
+   {
+    "w": 2400,
+    "file": "deck-logo-green-2400.jpg"
+   }
+  ],
+  "base": "projects/black-irons-golf/media/"
+ },
+ "share-a-smile/sas-campaign-cards.png": {
+  "kind": "image",
+  "w": 1672,
+  "h": 941,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "sas-campaign-cards-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "sas-campaign-cards-1600.jpg"
+   },
+   {
+    "w": 1672,
+    "file": "sas-campaign-cards-1672.jpg"
+   }
+  ],
+  "base": "projects/share-a-smile/media/"
+ },
+ "share-a-smile/Asset-34x-100-trimmed.jpg": {
+  "kind": "image",
+  "w": 2041,
+  "h": 1358,
+  "sizes": [
+   {
+    "w": 800,
+    "file": "Asset-34x-100-trimmed-800.jpg"
+   },
+   {
+    "w": 1600,
+    "file": "Asset-34x-100-trimmed-1600.jpg"
+   },
+   {
+    "w": 2041,
+    "file": "Asset-34x-100-trimmed-2041.jpg"
+   }
+  ],
+  "base": "projects/share-a-smile/media/"
+ }
+}
