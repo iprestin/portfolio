@@ -204,6 +204,19 @@
     .next-app img { width: 48px; height: 48px; border-radius: 22.5%; flex: none; }
     .next-app span { display: block; }
     .next .next-sub { color: var(--grey); margin-top: 2px; }
+    /* peek strip: "Next project", the next title highlighted in its colour and an arrow, in white on one line over a thin
+       band of the next project's hero (kept at its size, only its middle showing), tinted so the words read */
+    .next.peek-strip { position: relative; width: fit-content; min-width: min(220px, 72%); max-width: 100%; height: 52px;
+      margin: 44px auto 0; padding: 0; border: 0; border-radius: var(--r); overflow: hidden; }
+    .case .peek-strip .next-thumb { position: absolute; top: 50%; left: 0; width: 100%; margin: 0; translate: 0 -50%; }
+    .peek-strip .next-thumb::after { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,.55); transition: background .25s; }
+    .peek-strip:hover .next-thumb::after { background: rgba(0,0,0,.68); }
+    .peek-strip .next-line { position: relative; z-index: 1; display: flex; align-items: center; gap: 10px; height: 100%;
+      padding: 0 28px; white-space: nowrap; } /* always one line: the strip grows to fit it */
+    .next.peek-strip span { color: #fff; }
+    .peek-strip .title { padding: 0 .15em; }
+    .peek-strip .next-arrow { transition: transform .25s ease-out; }
+    .peek-strip:hover .next-arrow { transform: translateX(6px); }
     @media (max-width: 860px) { /* tablet: title and credits share the top row, the text runs full width below */
       .case-head { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .case-text { grid-column: 1 / -1; grid-row: 2; }
@@ -2056,7 +2069,7 @@
     function buildW2(){
       const gs=L.map(l=>{const g=l.g;
         const g2=new ArtisType.Glyph({char:g.char},{x:l.x,y:l.y,w:g.w*l.s,h:g.h*l.s,angle:g.angle+l.a},g.index,cachedInfos[g.index].strokes);
-        g2._a0=l.a;return g2});
+        g2._a0=l.a;g2.svgIdx=g.svgIdx;return g2}); // svgIdx: the copy takes its letter's colour
       W2=new ArtisType.World(width,height,gs);W2.reducedMotion=reduced.matches;W2._grow=growAt();
     }
     function syncFromW2(){
@@ -2684,8 +2697,12 @@
       t.append(textEl('span', '', 'Currently working on'), textEl('strong', '', 'Pelicula \u2197\uFE0E'), textEl('span', 'next-sub', 'An iPhone app to rank and track the films you\'ve seen'));
       next.append(icon, t);
     } else {
-      next.href = hrefOf({ name: 'project', slug: n.slug });
-      next.append(textEl('span', '', 'Next project'), textEl('strong', '', n.title));
+      next.href = hrefOf({ name: 'project', slug: n.slug }); next.classList.add('peek-strip');
+      const fig = mediaEl(n.hero, { sizes: '300px' }); fig.classList.add('next-thumb');
+      const line = document.createElement('div'); line.className = 'next-line';
+      const t = textEl('span', 'title', n.title); t.style.background = [].concat(n.color || '#E7006A')[0];
+      const arrow = textEl('span', 'next-arrow', '\u2192'); arrow.setAttribute('aria-hidden', 'true');
+      line.append(textEl('span', '', 'Next project'), t, arrow); next.append(fig, line);
     }
     c.append(next);
     projView.append(c);
