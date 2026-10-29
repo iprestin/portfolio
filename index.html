@@ -293,6 +293,165 @@
       background: #fff; box-shadow: 0 8px 40px rgba(0,0,0,.18); opacity: 0; pointer-events: none; transition: opacity .2s; }
     #ig-preview.show { opacity: 1; pointer-events: auto; }
     #ig-preview iframe { width: 100%; height: 100%; border: 0; }
+    /* #/stats: the unlisted stats page, over everything, in the case studies' type */
+    #stats { position: fixed; inset: 0; z-index: 9; background: #f1f0ed; overflow-y: auto; -webkit-overflow-scrolling: touch;
+      padding: 22px max(22px, 4.5vw) calc(64px + env(safe-area-inset-bottom, 0px));
+      font-family: sans-serif; font-size: 14px; line-height: 1.45; color: #111; --grey: #777; --line: #ececec; }
+    #stats[hidden] { display: none; }
+    /* it fades in (a beat after the word is spelled) and out, rather than cutting */
+    #stats { opacity: 0; transition: opacity .7s ease; }
+    #stats.in { opacity: 1; }
+    #stats.out { transition-duration: .35s; }
+    @media (prefers-reduced-motion: reduce) { #stats { transition: none; } }
+    /* the unlock: a pink circle, then the page in a second circle, both out of the word; then the cards rise */
+    #stats-wipe { position: fixed; inset: 0; z-index: 9; background: #E7006A; pointer-events: none; }
+    #stats-wipe[hidden] { display: none; }
+    #stats.cut { transition: none; }
+    #stats.enter .sb-card { animation: sb-enter .65s cubic-bezier(.2,.8,.2,1) both; }
+    @keyframes sb-enter { from { opacity: 0; transform: translateY(22px) scale(.98); } }
+    .st-found { font: 22px/1 'Gaegu', 'Comic Sans MS', cursive; color: #E7006A; text-transform: none; letter-spacing: 0;
+      display: inline-block; transform: rotate(-4deg); animation: st-found 3.4s .8s both; }
+    @keyframes st-found { 0% { opacity: 0; transform: rotate(-4deg) translateY(6px); } 10%, 82% { opacity: 1; transform: rotate(-4deg); } 100% { opacity: 0; } }
+    .st-lock { text-align: center; }
+    .st-lock-icon { display: flex; justify-content: center; }
+    .st-lock input::placeholder { font: 22px/1 'Gaegu', 'Comic Sans MS', cursive; color: #aaa; }
+    .st-lock .lock { width: 34px; height: 34px; }
+    .st-lock .lock path { transition: transform .45s cubic-bezier(.3,1.7,.5,1); }
+    .st-lock.opening .lock path { transform: translateY(-4px) rotate(-14deg); transform-origin: 16px 11px; }
+    .st-lock.opening { opacity: 0; transition: opacity .3s .4s; }
+    #stats button { background: none; border: 0; font: inherit; color: inherit; cursor: pointer; padding: 8px 10px; margin: -8px -10px; }
+    #stats a { color: inherit; }
+    .st-top { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px;
+      font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; }
+    .st-top h2 { font: inherit; display: flex; align-items: center; gap: 12px; }
+    .st-status { color: var(--grey); text-transform: none; letter-spacing: 0; display: inline-flex; align-items: center; gap: 6px; }
+    .st-status.busy::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #E7006A; animation: st-pulse 1s ease-in-out infinite; }
+    .st-ranges { display: flex; gap: 22px; }
+    .st-ranges button { color: var(--grey); }
+    .st-ranges button.on { color: #111; text-decoration: underline; text-underline-offset: 3px; }
+    .st-side { justify-self: end; display: flex; gap: 22px; }
+    .st-side button:first-child:not(:last-child) { color: var(--grey); }
+    .st-muted { color: var(--grey); }
+    .st-err { color: #E7006A; margin-top: 12px; }
+    .st-axis { display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: var(--grey); letter-spacing: 0.04em; min-height: 16px; }
+    .st-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .st-title { color: #fff; padding: 0 .15em; }
+    .st-n { font-variant-numeric: tabular-nums; }
+    /* data arriving: bars grow from their baseline, sections fade up (only the first time, not on every refresh) */
+    .st-anim { animation: st-fade .5s cubic-bezier(.2,.8,.2,1) both; }
+    @keyframes st-fade { from { opacity: 0; transform: translateY(8px); } }
+    @keyframes st-grow-y { from { transform: scaleY(0); } }
+    @keyframes st-grow-x { from { transform: scaleX(0); } }
+    @keyframes st-pulse { 50% { opacity: .25; } }
+    /* loading placeholders, in the shape of what they stand for */
+    .st-sk { background: linear-gradient(90deg, #f2f2f2 25%, #e7e7e7 40%, #f2f2f2 55%); background-size: 300% 100%;
+      animation: st-shimmer 1.3s linear infinite; border-radius: 4px; }
+    @keyframes st-shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
+    .st-sk-big { width: min(220px, 60%); height: clamp(58px, 9vw, 115px); }
+    .st-sk-line { width: 180px; height: 12px; margin-top: 14px; }
+    .st-sk-val { width: 70%; height: 22px; }
+    .st-sk-bar { width: 100%; border-radius: 3px 3px 0 0; }
+    .st-sk-row { height: 12px; margin: 9px 0 10px; }
+    .st-lock { max-width: 420px; margin: 18vh auto 0; display: grid; gap: 12px; }
+    .st-lock-row { display: flex; gap: 10px; margin-top: 6px; }
+    .st-lock input { flex: 1; min-width: 0; font: inherit; font-size: 16px; padding: 10px 12px; border: 1px solid #ccc; border-radius: 8px; }
+    #stats .st-lock-row button { margin: 0; padding: 10px 16px; background: #111; color: #fff; border-radius: 8px; }
+    @media (max-width: 543px) {
+      #stats { padding-inline: 16px; }
+      .st-top { grid-template-columns: 1fr auto; }
+      .st-ranges { grid-row: 2; grid-column: 1 / -1; gap: 18px; }
+    }
+    @media (prefers-reduced-motion: reduce) { .st-anim, .st-sk, .st-status.busy::before { animation: none; } }
+    /* the dashboard: white cards on a light grey ground, a pink headline card, bars in tracks, a calendar of
+       days, tabs for the smaller lists and a dark card that says what stands out */
+    .sb-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; margin-top: 28px; }
+    .sb-card { grid-column: span var(--span); background: #fff; border-radius: 8px; padding: 22px; min-width: 0;
+      position: relative; display: flex; flex-direction: column; }
+    .sb-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 20px; min-height: 28px; }
+    .sb-card h3 { font-size: 11px; font-weight: normal; letter-spacing: 0.04em; text-transform: uppercase; }
+    .sb-note { color: var(--grey); font-size: 12px; }
+    .sb-hero { background: #E7006A; color: #fff; min-height: 270px; }
+    .sb-pill { background: rgba(0,0,0,.2); border-radius: 99px; padding: 3px 10px; font-size: 12px; white-space: nowrap; }
+    .sb-big { font-size: clamp(72px, 8vw, 124px); line-height: .9; letter-spacing: -.04em; margin-top: auto; font-variant-numeric: tabular-nums; }
+    .sb-sub { margin-top: 10px; opacity: .85; }
+    .sb-minis { display: flex; gap: 28px; margin-top: 22px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.35); }
+    .sb-minis div > span { display: block; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; opacity: .75; margin-bottom: 2px; }
+    .sb-hero .st-sk, .sb-dark .st-sk { background: rgba(255,255,255,.22); animation: st-pulse 1.2s ease-in-out infinite; }
+    .sb-dark .st-sk { background: rgba(255,255,255,.12); }
+    .sb-seg { display: inline-flex; background: #f1f0ed; border-radius: 99px; padding: 3px; }
+    #stats .sb-seg button { margin: 0; padding: 5px 12px; border-radius: 99px; font-size: 12px; color: var(--grey); }
+    #stats .sb-seg button.on { background: #fff; color: #111; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+    .sb-plot { position: relative; margin-top: auto; }
+    .sb-bars { display: flex; justify-content: flex-end; gap: var(--gap, 4px); height: 190px; } /* few days (early on, All time): bars keep a bar's width, lined up to Today */
+    .sb-track { flex: 1 1 0; min-width: 0; max-width: 44px; background: #f1f0ed; border-radius: 4px; display: flex; align-items: flex-end; overflow: hidden; }
+    .sb-bar { width: 100%; background: #111; border-radius: 4px; transform-origin: bottom; }
+    .sb-track:hover .sb-bar { background: #E7006A; }
+    .sb-tip { position: absolute; translate: -50% calc(-100% - 8px); white-space: nowrap; pointer-events: none; z-index: 2;
+      background: #111; color: #fff; font-size: 12px; padding: 4px 8px; border-radius: 4px; }
+    .sb-tip[hidden] { display: none; }
+    .sb-cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; width: 100%; max-width: 420px; margin: 0 auto; }
+    .sb-cal .wd { text-align: center; font-size: 11px; color: var(--grey); padding-bottom: 2px; }
+    .sb-dot { aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; font-size: 13px;
+      font-variant-numeric: tabular-nums; background: #f1f0ed; color: #b5b5b5; }
+    .sb-dot.on { color: #111; }
+    .sb-dot.hot { color: #fff; }
+    .sb-dot:hover { outline: 2px solid #111; outline-offset: 2px; }
+    .sb-cal.small { max-width: 300px; gap: 5px; }
+    .sb-cal.small .sb-dot { font-size: 0; }
+    .sb-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 7px 12px; padding: 8px 0; }
+    .sb-row .st-label { line-height: 1.3; }
+    .sb-meter { grid-column: 1 / -1; height: 6px; background: #f1f0ed; border-radius: 99px; overflow: hidden; }
+    .sb-meter i { display: block; height: 100%; background: #111; border-radius: 99px; transform-origin: left; }
+    .sb-imgs { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 20px 16px; }
+    .sb-img { min-width: 0; }
+    .sb-img img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 6px; background: #f1f0ed; }
+    .sb-img-meta { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; font-size: 13px; min-width: 0; }
+    .sb-img-meta .st-title, .sb-img-meta .st-muted { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; align-self: flex-start; max-width: 100%; }
+    .st-anim .sb-img { animation: st-fade .5s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i) * 40ms + 100ms); }
+    @media (max-width: 543px) { .sb-imgs { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 16px 12px; } }
+    .st-test { background: #E7006A; color: #fff; padding: 2px 7px; border-radius: 4px; }
+    #stats .sb-prow { width: 100%; margin: 0; padding: 8px 0; text-align: left; border-radius: 0; }
+    .sb-chev { display: inline-block; width: 1.2em; margin-left: 6px; color: var(--grey); }
+    .sb-detail { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 18px 28px; padding: 10px 0 20px; border-bottom: 1px solid #ececec; }
+    .sb-detail h4, .sb-sub-h { font-size: 11px; font-weight: normal; letter-spacing: 0.04em; text-transform: uppercase; color: var(--grey); margin-bottom: 8px; }
+    .sb-reach-row { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; gap: 10px; align-items: center; font-size: 12px; padding: 3px 0; }
+    .sb-reach-row .sb-meter { grid-column: auto; } /* a meter elsewhere spans its row; here it sits between the % and the count */
+    .sb-facts { display: grid; gap: 12px; align-content: start; }
+    .sb-facts-row { grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .sb-fact span { display: block; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--grey); margin-bottom: 3px; }
+    .sb-fact strong { font-weight: normal; font-size: 14px; white-space: pre-line; }
+    .sb-facts-row .sb-fact strong { font-size: 24px; line-height: 1.1; }
+    .sb-small { font-size: 12px; margin-top: 10px; }
+    .st-n small { color: var(--grey); font-size: 12px; }
+    .sb-letters { display: flex; flex-wrap: wrap; gap: 6px; }
+    .sb-gap { width: 14px; }
+    .sb-letter { width: 44px; border-radius: 8px; background: #f1f0ed; text-align: center; padding: 6px 0 5px; }
+    .sb-letter b { display: block; font-size: 20px; line-height: 1.1; }
+    .sb-letter span { font-size: 11px; color: var(--grey); }
+    .sb-letter.hot b, .sb-letter.hot span { color: #fff; }
+    .sb-letter.top { outline: 2px solid #111; outline-offset: 2px; }
+    @media (max-width: 543px) {
+      .sb-detail { grid-template-columns: 1fr; }
+      .sb-letter { width: calc((100% - 36px) / 7); }
+      .sb-gap { flex-basis: 100%; height: 0; }
+    }
+    .sb-dark { background: #111; color: #fff; }
+    .sb-dark h3 { color: rgba(255,255,255,.6); }
+    .sb-insights { display: grid; gap: 14px; margin-top: auto; font-size: 17px; line-height: 1.35; letter-spacing: -.01em; }
+    .sb-insights .st-title { font-size: inherit; }
+    .sb-insights .dim { color: rgba(255,255,255,.55); }
+    .st-anim .sb-bar { animation: st-grow-y .7s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i) * 6ms); }
+    .st-anim .sb-meter i { animation: st-grow-x .7s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i) * 50ms + 100ms); }
+    .st-anim .sb-dot { animation: sb-pop .5s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i) * 12ms); }
+    @keyframes sb-pop { from { transform: scale(.4); opacity: 0; } }
+    @media (max-width: 860px) { .sb-card { grid-column: span 12; } .sb-hero { min-height: 230px; } }
+    @media (max-width: 543px) {
+      .sb-grid { gap: 12px; margin-top: 20px; }
+      .sb-card { padding: 18px; }
+      .sb-bars { height: 150px; }
+      .sb-insights { font-size: 17px; }
+    }
+    @media (prefers-reduced-motion: reduce) { .st-anim .sb-bar, .st-anim .sb-meter i, .st-anim .sb-dot { animation: none; } }
     #about .ig { vertical-align: -.15em; margin-right: .35em; } /* the Instagram glyph, drawn in the link's colour */
     .card {
       background: #fff; padding: 48px 44px; max-width: 420px; width: 90%;
@@ -327,8 +486,8 @@
       <p>Prestin Artis is a VCD / UX / UI designer.</p>
       <ul class="links">
         <li><a href="mailto:partisuw@gmail.com">partisuw@gmail.com</a></li>
-        <li><a href="https://www.instagram.com/iprestin/" class="ig-link" target="_blank" rel="noopener" aria-label="Instagram: @iprestin"><svg class="ig" viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>@iprestin</a></li>
-        <li><a href="#/about" id="about-link">About</a></li>
+        <li><a href="https://www.instagram.com/iprestin/" class="ig-link" target="_blank" rel="noopener" aria-label="Instagram: @iprestin"><svg class="ig" viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>iprestin</a></li>
+        <li><a href="#/about" id="about-link">About Me</a></li>
       </ul>
     </div>
   </section>
@@ -345,6 +504,8 @@
   </section>
   <div id="ig-preview" aria-hidden="true"></div>
   <div id="zoom" hidden><img alt=""><video muted loop playsinline hidden></video></div>
+  <div id="stats-wipe" hidden></div>
+  <section id="stats" hidden aria-label="Stats"></section>
 
   <footer>
     <button id="soon-btn" aria-controls="soon" aria-expanded="false">VCD / UX / UI</button>
@@ -354,6 +515,16 @@
 
 
 
+<script>
+/* testing on a phone over the local network: any script error shows in a red bar (never on the live site) */
+if (/^(localhost|127\.|10\.|192\.168\.)/.test(location.hostname)) {
+  const bar = m => { const d = document.createElement('div'); d.textContent = m;
+    d.style.cssText = 'position:fixed;left:8px;right:8px;top:8px;z-index:99;background:#c00;color:#fff;font:12px/1.4 monospace;padding:8px 10px;border-radius:6px;white-space:pre-wrap';
+    d.onclick = () => d.remove(); document.body.append(d); };
+  addEventListener('error', e => bar(`${e.message}\n${(e.filename || '').split('/').pop()}:${e.lineno}:${e.colno}`));
+  addEventListener('unhandledrejection', e => bar('promise: ' + (e.reason?.message || e.reason)));
+}
+</script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════════
    ArtisType — stroke-particle soft-body engine for hand-drawn letters.
@@ -655,6 +826,8 @@
     'letters/last name (artis)/s.svg',
   ];
   const ALL_CHARS = ['P','R','E','S','T','I','N','A','R','T','I','S'];
+  // stable names per letter for the stats (svgIdx order); the two R, T, I and S are told apart by name
+  const LETTER_IDS = ['prestin-P','prestin-R','prestin-E','prestin-S','prestin-T','prestin-I','prestin-N','artis-A','artis-R','artis-T','artis-I','artis-S'];
 
   /* ── Composition data ────────────────────────────────────────────────── */
   // authored:true  → hand-authored in cc_v6 at refW×refH
@@ -756,6 +929,7 @@
   const hexRGB = h => [1,3,5].map(i => parseInt(h.slice(i,i+2),16));
   const N_INK = 12;
   let inkRGB = Array.from({ length: N_INK }, () => hexRGB(COLOR)), ink = inkRGB.map(() => COLOR), inkRaf = 0;
+  const inkOver = new Map(); // svgIdx -> colour for a moment (the STATS unlock), over whatever ink says
   function setInk(color) {
     let list = [].concat(color || []).filter(c => /^#[0-9a-f]{6}$/i.test(c)); // a project without a colour just stays pink
     if (!list.length) list = [COLOR];
@@ -1257,6 +1431,7 @@
     // Physics sleeps at frame 40 unconditionally
     if (quietFrames>=40&&!_animOnly) {
       world.sleep(); prevTime=0; accum=0; _animOnly=true;
+      guard.settled(); // the letters have come to rest: the moment a spelled word counts
       if(_autoDownload){_autoDownload=false;meas.download();}
     }
     // RAF continues only while physics active or visual animation running
@@ -1307,7 +1482,7 @@
     const band=halo*2/Math.sqrt(drawing.rx*drawing.ry);
     ctx.strokeStyle='rgba(255,255,255,0.97)'; ctx.lineWidth=glyph.radius*2+band;
     for(const p of drawing.paths)ctx.stroke(p);
-    ctx.strokeStyle=ink[glyph.svgIdx]??COLOR; ctx.lineWidth=glyph.radius*2;
+    ctx.strokeStyle=inkOver.get(glyph.svgIdx)??ink[glyph.svgIdx]??COLOR; ctx.lineWidth=glyph.radius*2;
     for(const p of drawing.paths)ctx.stroke(p);
     ctx.restore();
   }
@@ -1613,13 +1788,51 @@
       for(const c of w.slice(1))out=out.flatMap(ch=>of(c).filter(g=>!ch.includes(g)&&next(ch.at(-1),g)).map(g=>[...ch,g]));
       return out;
     }
+    // the other way round: spelling STATS in the masthead while Projects is open opens the stats page.
+    // It only counts once everything has settled (the loop's sleep: nothing held, nothing moving for
+    // 40 frames), so passing through the word mid-drag never fires it; then a beat, then the unlock.
+    // Not again until the word is broken up
+    // On a phone the whole world rarely sleeps (the tight band keeps letters nudging, and Safari's bar
+    // resizes the window), so it also counts once the five letters themselves have been still for half a second
+    let statsDone=false,statsT=0,still=0;
+    const spelled=()=>stage.isOpen()&&!world.drag&&chains('STATS')[0];
+    const speed=ch=>{let v=0,n=0;for(const g of ch)for(const p of g.nodes){v+=Math.hypot(p.vx,p.vy);n++}return v/n};
+    function stats(){
+      const ch=stage.isOpen()&&chains('STATS')[0];
+      if(!ch){statsDone=false;still=0;clearTimeout(statsT);return}
+      if(statsDone||world.drag){still=0;return}
+      still=speed(ch)<.25?still+1:0;
+      if(still>=30)settled();
+    }
+    function settled(){
+      if(statsDone||!world||intro.active||!spelled())return;
+      statsDone=true;still=0;
+      statsT=setTimeout(()=>{const ch=spelled();if(ch)unlock(ch);else statsDone=false},250); // still there after the beat
+    }
+    // like tumblers in a lock: S T A T S hop and turn black one after another, then the stats page
+    // opens out of the middle of the word; the letters go back to their colour behind it
+    function unlock(ch){
+      const GAP=110;
+      ch.forEach((g,i)=>setTimeout(()=>{
+        inkOver.set(g.svgIdx,'#111');
+        for(const n of g.nodes)n.vy-=4.5;
+        world.energy=1;renderDirty=true;wake();
+        try{navigator.vibrate?.(8)}catch{}
+      },i*GAP));
+      setTimeout(()=>{
+        const b=ch.map(g=>g.bounds);
+        setTimeout(()=>{inkOver.clear();renderDirty=true;draw()},1000);
+        window.ArtisStats?.({x:(Math.min(...b.map(x=>x.minX))+Math.max(...b.map(x=>x.maxX)))/2,y:(Math.min(...b.map(x=>x.minY))+Math.max(...b.map(x=>x.maxY)))/2});
+      },ch.length*GAP+380);
+    }
     function step(){
       if(!world||intro.active||stage.flying())return; // letters mid-swap can't trigger it again
+      stats();
       const ch=WORDS.flatMap(chains)[0];if(!ch)return;
       release(); // let go of the letter being dragged
       stage.shuffle(ch);
     }
-    return {step};
+    return {step,settled};
   })();
 
   /* ── Resize ──────────────────────────────────────────────────────────── */
@@ -1684,6 +1897,8 @@
     canvas.setPointerCapture(e.pointerId);
     world.grab(g,pt); g.z=++topZ;
     canvas.classList.add('grabbing');
+    window.ArtisTrack?.('letters/played'); window.ArtisTrack?.('letter/'+LETTER_IDS[g.svgIdx]); // the stats: did they play, and with which
+
     replay.recordEvent('down',e.clientX,e.clientY);
     wake();
   });
@@ -1747,6 +1962,7 @@
     // formation, and stage.open raises the floor into the masthead as the Projects button does
     const api={active:!/^#\/(?:projects(?:\/[\w-]+)?|about)\/?$/.test(location.hash)};
     let phase='bubble', raf=0, prev=0, acc=0, t=0, popT=0;
+    let popBy=null; // who popped it, for the stats: null (a person), 'auto' (the timer), 'skipped' (Projects opened first)
     let L=[], M=[], drops=[], C={x:0,y:0}, R=1, R0=1, A0=1, edgeLen=1;
     let pointer=null, lastPtr=null, ripples=[], W2=null, hover=0, popAng=0, popPt=null, film=1, lastW=0, lastH=0;
     const rnd=(a,b)=>a+Math.random()*(b-a);
@@ -1919,6 +2135,7 @@
 
     /* (Re)attach to a freshly built world — first load or resize during intro */
     function attach(){
+      window.ArtisTrack?.('bubble/shown'); // once a page load, however often it's rebuilt
       if(W2)syncFromW2();
       const prevL=L, prevC=C, prevR=R, pw=lastW||width, ph=lastH||height;
       C={x:width/2,y:height/2}; R0=Math.min(width,height)*.4; setRadius(); lastW=width; lastH=height;
@@ -2059,7 +2276,7 @@
     function autoPop(){
       const c=centroid();let far=M[0],fd=0;
       for(const p of M){const d=Math.hypot(p.x-c.x,p.y-c.y);if(d>fd){fd=d;far=p}}
-      down({x:c.x+(far.x-c.x)*.85,y:c.y+(far.y-c.y)*.85});
+      popBy='auto';down({x:c.x+(far.x-c.x)*.85,y:c.y+(far.y-c.y)*.85});
     }
 
     /* LG3 bubble letters: a private World of scaled copies of the real glyphs.
@@ -2092,6 +2309,7 @@
       if(phase!=='bubble'||!inside(pt))return;
       syncFromW2();
       phase='burst';popT=t;pointer=null;canvas.classList.remove('pop');
+      window.ArtisTrack?.('bubble/'+(popBy||'manual'));popBy=null; // a tap or click is manual; the timer and Projects say so
       popPt=pt;popAng=Math.atan2(pt.y-C.y,pt.x-C.x);ripples.push({x:pt.x,y:pt.y,t0:t,amp:1.6});
       const rm=reduced.matches,sp=clamp(R/300,.6,1.8),fb=glass.ok&&glass.style()==='lg4';
       for(const p of M)p.breakAt=angDist(p.th,popAng)/Math.PI*TEAR_MS;
@@ -2179,7 +2397,7 @@
     // Returns each letter's formation spot and full width (its "home") plus the bubble to flash.
     function popNow(){
       if(!api.active)return releaseHome();
-      if(phase==='bubble')down({x:C.x,y:C.y});
+      if(phase==='bubble'){popBy='skipped';down({x:C.x,y:C.y})}
       const ring={x:C.x,y:C.y,r:R},list=L.map(l=>({g:l.g,tx:l.tx,ty:l.ty,s:l.s}));
       handoffNow();
       for(const h of list)if(h.s!==1)shrinkRest(h.g,h.s);
@@ -2443,18 +2661,652 @@
     if (!m) return { name: 'home' };
     return m[1] ? { name: 'project', slug: m[1] } : { name: 'list' };
   }
+  /* stats (GoatCounter): one pageview per view, so each case study counts on its own. Set GC to the
+     site code from goatcounter.com; empty = no tracking. #/stats is the unlisted door to the dashboard
+     (GoatCounter does the login) and stops counting this browser's own visits */
+  // pfv5: a copy running on this computer or network (localhost, 10.x, 192.168.x) counts into a separate
+  // test site, GC_TEST, so testing never touches the real numbers. ?gc=dry sends nothing at all: every
+  // view and event goes to the console and window.__gc instead
+  const LOCAL = /^(localhost|127\.|10\.|192\.168\.)/.test(location.hostname);
+  const GC_LIVE = 'prestinartis', GC_TEST = 'prestinartis-test';
+  const DRY = LOCAL && new URLSearchParams(location.search).get('gc') === 'dry';
+  const GC = LOCAL ? GC_TEST : GC_LIVE;
+  const gcQueue = [];
+  const send = vars => window.goatcounter?.count ? window.goatcounter.count(vars) : gcQueue.push(vars);
+  if (DRY) {
+    window.__gc = [];
+    window.goatcounter = { count: v => { window.__gc.push(v); console.log('[gc]', v.event ? 'event' : 'view', v.path, v.no_session ? '(every click)' : '', v.title || ''); } };
+  } else if (GC) {
+    const s = document.createElement('script');
+    s.async = true; s.src = 'https://gc.zgo.at/count.js';
+    s.dataset.goatcounter = `https://${GC}.goatcounter.com/count`;
+    s.dataset.goatcounterSettings = JSON.stringify({ no_onload: true, allow_local: LOCAL });
+    s.onload = () => gcQueue.splice(0).forEach(send);
+    document.head.appendChild(s);
+  }
+  /* events. GoatCounter counts a path once per visit (its "visitors"), so an event's number reads as
+     "visits that did this". A click sent with total also goes out as path + '~all' with no_session,
+     which GoatCounter counts every time: total clicks. A once-per-visit event leaves this page at most
+     once per load, so a drag or a scroll never sends more than one */
+  const sent = new Set();
+  function track(path, { title = '', total = false } = {}) {
+    if (!GC) return;
+    try {
+      if (!sent.has(path)) { sent.add(path); send({ path, title, event: true }); }
+      if (total) send({ path: path + '~all', title, event: true, no_session: true });
+    } catch {}
+  }
+  window.ArtisTrack = track;
+  // script errors on real visits (each kind counted, at most 5 a page load)
+  let errs = 0;
+  const jsError = (kind, msg) => { if (errs++ < 5) track('error/' + kind, { title: String(msg || '').slice(0, 120), total: true }); };
+  addEventListener('error', e => { if (e.message) jsError('js', e.message); });
+  addEventListener('unhandledrejection', e => jsError('promise', e.reason?.message || e.reason));
+  /* a ping for each new visitor: a push on the ntfy app for anyone subscribed to NTFY (ntfy.sh), and an
+     email to PING_TO through FormSubmit (ntfy no longer emails without an account; FormSubmit's first
+     message asks PING_TO to activate it once). One per visit, 8 s in (or on leaving, if sooner), saying what they looked
+     at, where they came from and on what. Never from a browser that has opened #/stats (skipgc), so your
+     own visits stay quiet; tapping it opens the stats */
+  const NTFY = 'prestin-dlvr33hou2l0e6sfvg', PING_TO = 'partisuw@gmail.com';
+  const looked = [];
+  let pinged = false;
+  try { pinged = sessionStorage.getItem('pinged') === '1'; } catch {}
+  function note(v) {
+    const label = v.name === 'project' ? data?.projects.find(p => p.slug === v.slug)?.title || v.slug
+      : { home: 'Homepage', list: 'Projects list', about: 'About' }[v.name];
+    if (label && !looked.includes(label)) looked.push(label);
+    if (looked.length === 1) setTimeout(ping, 8000);
+  }
+  function ping() {
+    if (pinged || !NTFY || !looked.length) return;
+    try { if (localStorage.getItem('skipgc') === 't') return; } catch {}
+    pinged = true;
+    try { sessionStorage.setItem('pinged', '1'); } catch {}
+    const p = new URLSearchParams(location.search), tag = p.get('ref') || p.get('utm_campaign') || p.get('utm_source');
+    let from = tag;
+    if (!from) try { const r = new URL(document.referrer); if (r.host !== location.host) from = r.host.replace(/^www\./, ''); } catch {}
+    const on = matchMedia('(pointer: coarse)').matches ? (Math.min(screen.width, screen.height) < 600 ? 'a phone' : 'a tablet') : 'a computer';
+    const msg = `Looked at: ${looked.join(', ')}\nFrom: ${from || 'Direct / unknown'}\nOn: ${on}`;
+    if (DRY) { console.log('[ping]', msg); return; }
+    const q = new URLSearchParams({ title: (LOCAL ? '[test] ' : '') + 'New visitor on your site', tags: 'eyes', click: location.origin + location.pathname + '#/stats' });
+    navigator.sendBeacon(`https://ntfy.sh/${NTFY}?${q}`, msg);
+    fetch(`https://formsubmit.co/ajax/${PING_TO}`, { method: 'POST', keepalive: true, // keepalive: still sent if they're leaving
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ _subject: (LOCAL ? '[test] ' : '') + 'New visitor on your site', _template: 'box', _captcha: 'false', message: msg, stats: location.origin + location.pathname + '#/stats' }) })
+      .catch(() => {});
+  }
+  addEventListener('pagehide', ping);
+
+  function count(v) {
+    note(v);
+    if (!GC) return;
+    // a tagged link (?ref=linkedin, or utm_source/utm_campaign) stands in for the referrer; untagged visits keep the real one
+    const p = new URLSearchParams(location.search), tag = p.get('ref') || p.get('utm_campaign') || p.get('utm_source');
+    send({ path: v.name === 'home' ? '/' : '/' + hrefOf(v), title: v.slug || v.name, referrer: tag || undefined });
+  }
+  /* the stats page itself: numbers from GoatCounter's API, unlocked with an API key pasted once per
+     device and kept only in that browser, so the site's code holds no secret. Tagged links
+     (?ref=linkedin) arrive as referrers, so they show under "Where from" */
+  const stats = (() => {
+    const box = document.getElementById('stats');
+    // whose numbers: the live site's. On a local copy, ?site=test reads the test site and ?site=fixture
+    // reads stats-fixture.js (fixed made-up numbers for checking the page, marked TEST DATA)
+    const SITE_Q = LOCAL ? new URLSearchParams(location.search).get('site') : null;
+    const FIXTURE = SITE_Q === 'fixture', SITE = SITE_Q === 'test' ? GC_TEST : GC_LIVE;
+    const KEY = 'gc-key', CACHE = `gc-cache:${FIXTURE ? 'fixture' : SITE}:`, API = `https://${SITE}.goatcounter.com/api/v0`;
+    const RANGES = [[7, '7 days'], [30, '30 days'], [90, '90 days'], [365, '1 year'], [0, 'All time']];
+    const SINCE = '2026-10-29'; // the day counting began: All time starts here
+    const LETTERS = ['prestin-P','prestin-R','prestin-E','prestin-S','prestin-T','prestin-I','prestin-N','artis-A','artis-R','artis-T','artis-I','artis-S'];
+    const still = matchMedia('(prefers-reduced-motion: reduce)');
+    let days = 30, open = false, run = 0, projs = null, status = null, recent = [];
+    let found = false, enterAt = 0, repaint = () => load();
+    let visView = 'Bars', tab = 'Pages', openProj = null;
+    // screen sizes come back as an id (phone, tablet…) with an empty name
+    const SIZES = { phone: 'Phones', largephone: 'Large phones', tablet: 'Tablets', desktop: 'Computers', desktophd: 'Big screens', unknown: 'Unknown' };
+    const statRows = x => x && (x.stats || []).map(y => ({ label: y.name || SIZES[y.id] || y.id || 'Unknown', n: y.count }));
+    const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+    const sk = cls => el('div', 'st-sk ' + cls);
+    const getKey = () => { if (FIXTURE) return 'fixture'; try { return localStorage.getItem(KEY); } catch { return null; } };
+    const setKey = k => { try { k ? localStorage.setItem(KEY, k) : localStorage.removeItem(KEY); } catch {} };
+    // the last numbers per range, so a reopen shows them at once while fresh ones load (cleared on Lock)
+    const cache = {
+      get: d => { try { return JSON.parse(localStorage.getItem(CACHE + d)); } catch { return null; } },
+      set: (d, v) => { try { localStorage.setItem(CACHE + d, JSON.stringify(v)); } catch {} },
+      clear: () => { try { for (const k of Object.keys(localStorage)) if (k.startsWith('gc-cache:')) localStorage.removeItem(k); } catch {} },
+    };
+    const wait = ms => new Promise(r => setTimeout(r, ms));
+    const ymd = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const dayName = (s, o) => new Date(s + 'T12:00').toLocaleDateString(undefined, o);
+    const rangeName = d => RANGES.find(x => x[0] === d)[1];
+    const during = d => d ? `in the last ${rangeName(d)}` : 'since counting began';
+
+    /* GoatCounter allows 4 requests a second and counts the browser's permission check (preflight) as
+       one, so every call costs two: at most two calls start in any 1.1 s, most important first */
+    async function slot(me) {
+      for (;;) {
+        if (me !== run) throw { cancel: true };
+        const now = Date.now();
+        recent = recent.filter(t => now - t < 1100);
+        if (recent.length < 2) { recent.push(now); return; }
+        await wait(1100 - (now - recent[0]) + 5);
+      }
+    }
+    let fixtureReady = null;
+    const fixture = () => fixtureReady ??= new Promise((ok, no) => {
+      const sc = document.createElement('script'); sc.src = 'stats-fixture.js'; sc.onload = ok; sc.onerror = no; document.head.append(sc);
+    });
+    async function api(path, q, me, retry = 1) {
+      if (FIXTURE) { await fixture(); await wait(120); if (me !== run) throw { cancel: true }; return window.statsFixture(path, new URLSearchParams(q)); }
+      await slot(me);
+      let r;
+      try { r = await fetch(API + path + '?' + new URLSearchParams(q), { headers: { Authorization: 'Bearer ' + getKey(), 'Content-Type': 'application/json' } }); }
+      catch (e) { if (retry) { await wait(1200); return api(path, q, me, retry - 1); } throw e; } // a refused preflight looks like a network error
+      if (r.status === 401 || r.status === 403) throw { key: true };
+      if (r.status === 429 && retry) { await wait(1200); return api(path, q, me, retry - 1); }
+      if (!r.ok) throw new Error('GoatCounter ' + r.status);
+      return r.json();
+    }
+
+    function frame() { // the top line: title and status | ranges | lock, close
+      box.replaceChildren();
+      const top = el('div', 'st-top'), h = el('h2', null, 'Stats'), nav = el('nav', 'st-ranges'), side = el('div', 'st-side');
+      status = el('span', 'st-status');
+      h.append(status);
+      if (FIXTURE || SITE === GC_TEST) h.append(el('span', 'st-test', FIXTURE ? 'Test data' : 'Test site'));
+      if (found) { // came in by spelling STATS: say so, once, in the About page's marker
+        found = false;
+        gaegu();
+        h.append(el('span', 'st-found', 'you found it ✓'));
+      }
+      if (getKey()) {
+        for (const [d, label] of RANGES) {
+          const b = el('button', d === days ? 'on' : '', label);
+          b.onclick = () => { if (d !== days) { days = d; load(); } };
+          nav.append(b);
+        }
+        const lock = el('button', null, 'Lock');
+        lock.onclick = () => { setKey(null); cache.clear(); load(); };
+        side.append(lock);
+      }
+      const close = el('button', null, 'Close');
+      close.onclick = hide;
+      side.append(close);
+      top.append(h, nav, side);
+      const body = el('div');
+      box.append(top, body);
+      return body;
+    }
+    const gaegu = () => { if (!document.getElementById('gaegu')) document.head.insertAdjacentHTML('beforeend', '<link id="gaegu" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu&display=swap">'); };
+    const setStatus = (text, busy) => { status.textContent = text; status.classList.toggle('busy', !!busy); };
+
+    function lockScreen(body, msg) {
+      const f = el('form', 'st-lock'); // the "password" is a GoatCounter API key with only Read statistics ticked
+      const inp = el('input'), btn = el('button', null, 'Unlock'), row = el('div', 'st-lock-row');
+      inp.type = 'password'; inp.placeholder = 'bahhhhhhhhh';
+      gaegu(); inp.autocomplete = 'off'; inp.spellcheck = false;
+      btn.type = 'submit';
+      row.append(inp, btn);
+      const icon = el('div');
+      icon.innerHTML = '<svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 11V7.5a4 4 0 0 1 8 0V11"/><rect x="5" y="11" width="14" height="10" rx="2.5"/></svg>';
+      icon.className = 'st-lock-icon';
+      f.append(icon, el('p', null, 'Paste your GOAT password'), row);
+      if (msg) f.append(el('p', 'st-err', msg));
+      f.onsubmit = e => { // the shackle springs open, then the numbers
+        e.preventDefault();
+        const k = inp.value.trim();
+        if (!k) return;
+        setKey(k);
+        f.classList.add('opening');
+        setTimeout(load, still.matches ? 0 : 650);
+      };
+      body.append(f);
+      setTimeout(() => inp.focus(), 0);
+    }
+
+    function span(d) { // d days back to today, or (0) everything since counting began, with nothing before it
+      const end = new Date(); end.setMinutes(0, 0, 0); end.setHours(end.getHours() + 1);
+      const start = d ? new Date() : new Date(SINCE + 'T00:00');
+      if (d) { start.setHours(0, 0, 0, 0); start.setDate(start.getDate() - d + 1); }
+      const prev = new Date(start); if (d) prev.setDate(prev.getDate() - d);
+      return { start, end, prev };
+    }
+    async function allHits(q, me) { // every path, 100 at a time (the API's most), paging on by leaving out the ones already in
+      let hits = [], more = true;
+      for (let page = 0; more && page < 5; page++) {
+        const p = new URLSearchParams({ ...q, limit: 100 });
+        for (const h of hits) p.append('exclude_paths', h.path_id);
+        let r;
+        try { r = await api('/stats/hits', p, me); }
+        catch (e) { if (e.key || e.cancel || !page) throw e; break; } // a later page failing keeps what came
+        hits = hits.concat(r.hits || []);
+        more = !!r.more && !!(r.hits || []).length;
+      }
+      return { hits, more };
+    }
+
+    async function load() {
+      const me = ++run, body = frame();
+      if (!getKey()) return lockScreen(body);
+      const d = days, s = span(d), saved = cache.get(d), res = saved ? { ...saved } : {}, got = {};
+      let fresh = new Set(), queued = false;
+      repaint = () => paint();
+      const paint = () => { queued = false; if (me !== run) return; body.replaceChildren(); draw(body, res, d, s, fresh); fresh = new Set(); };
+      const soon = () => { if (!queued) { queued = true; requestAnimationFrame(paint); } };
+      paint();
+      setStatus(saved ? 'Updating…' : 'Loading…', true);
+      if (!projs) fetch('projects.json').then(r => r.json()).then(j => j.projects).catch(() => []).then(p => { projs = p; soon(); });
+      const q = { start: s.start.toISOString(), end: s.end.toISOString() }, lim = n => ({ ...q, limit: n });
+      // the total covers this range and the one before it in one call, for the change figure
+      const jobs = [['total', () => api('/stats/total', { ...q, start: s.prev.toISOString() }, me)], ['hits', () => allHits(q, me)],
+        ...[['refs', '/stats/toprefs', 10], ['size', '/stats/sizes', 8], ['loc', '/stats/locations', 8], ['sys', '/stats/systems', 8]].map(([k, p, n]) => [k, () => api(p, lim(n), me)])];
+      try {
+        await Promise.all(jobs.map(([k, go]) => go().then(v => {
+          got[k] = res[k] = v;
+          if (!saved) fresh.add(k);
+          soon();
+        })));
+        if (me !== run) return;
+        cache.set(d, got);
+        setStatus('Updated ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }));
+      } catch (e) {
+        if (me !== run || e.cancel) return;
+        run++; // stop the requests still queued
+        if (e.key) { setKey(null); cache.clear(); lockScreen(frame(), 'That key didn’t work. Check it has “Read statistics” ticked.'); }
+        else if (saved) setStatus('Couldn’t refresh: showing the last numbers');
+        else { setStatus(''); body.replaceChildren(el('p', 'st-err', `Couldn’t reach GoatCounter (${e.message || 'network'}). An ad blocker can stop it.`)); }
+      }
+    }
+
+    function countUp(node, to) {
+      if (still.matches || to < 2) { node.textContent = to.toLocaleString(); return; }
+      const t0 = performance.now();
+      const f = now => {
+        const k = Math.min(1, (now - t0) / 800);
+        node.textContent = Math.round(to * (1 - (1 - k) ** 3)).toLocaleString();
+        if (k < 1 && node.isConnected) requestAnimationFrame(f);
+      };
+      node.textContent = '0';
+      requestAnimationFrame(f);
+    }
+    const tag = row => { const t = el('span', 'st-title', row.label); t.style.background = row.color; return t; };
+
+    /* ── the dashboard ──────────────────────────────────────────────── */
+    function tipper(box) { // one tooltip per card, above whatever is hovered
+      const tip = el('div', 'sb-tip');
+      tip.hidden = true;
+      box.append(tip);
+      return (node, text) => {
+        node.onpointerenter = () => {
+          tip.textContent = text;
+          tip.hidden = false;
+          const cr = box.getBoundingClientRect(), nr = node.getBoundingClientRect(), half = tip.offsetWidth / 2;
+          tip.style.left = Math.min(Math.max(nr.left + nr.width / 2 - cr.left, half), cr.width - half) + 'px';
+          tip.style.top = nr.top - cr.top + 'px';
+        };
+        node.onpointerleave = () => { tip.hidden = true; };
+      };
+    }
+    const visitors = n => `${n.toLocaleString()} ${n === 1 ? 'visitor' : 'visitors'}`;
+    const skRows = (c, n = 4) => { for (let i = 0; i < n; i++) { const r = sk('st-sk-row'); r.style.width = 85 - i * 14 + '%'; c.append(r); } };
+
+    function meters(c, rows) { // label, count, a rounded meter in its track; projects fill in their own colour
+      if (!rows) return skRows(c);
+      if (!rows.length) return c.append(el('p', 'st-muted', 'Nothing yet'));
+      const m = Math.max(1, ...rows.map(r => r.n));
+      rows.forEach((r, i) => {
+        const row = el('div', 'sb-row'), lab = el('span', 'st-label'), meter = el('div', 'sb-meter'), fill = el('i');
+        if (r.color) lab.append(tag(r)); else lab.textContent = r.label;
+        fill.style.width = r.n / m * 100 + '%';
+        fill.style.setProperty('--i', i);
+        if (r.color) fill.style.background = r.color;
+        meter.append(fill);
+        row.append(lab, el('span', 'st-n', r.n.toLocaleString()), meter);
+        c.append(row);
+      });
+    }
+
+    function draw(body, r, d, s, fresh) {
+      const label = rangeName(d), first = ymd(s.start), grid = el('div', 'sb-grid');
+      const card = (cls, span, key) => {
+        const c = el('section', 'sb-card ' + cls + (fresh.has(key) ? ' st-anim' : ''));
+        c.style.setProperty('--span', span);
+        // rising in after the unlock: timed from the reveal, so a card redrawn mid-rise carries on rather than restarting
+        if (enterAt) c.style.animationDelay = grid.children.length * 70 + 380 - (performance.now() - enterAt) + 'ms';
+        grid.append(c);
+        return c;
+      };
+      const head = (c, title, extra) => { const h = el('div', 'sb-head'); h.append(el('h3', null, title)); if (extra) h.append(extra); c.append(h); };
+      const seg = (opts, cur, pick) => {
+        const g = el('div', 'sb-seg');
+        for (const o of opts) { const b = el('button', o === cur ? 'on' : '', o); b.onclick = () => pick(o); g.append(b); }
+        return g;
+      };
+
+      // what everything below is worked out from
+      let days = null, now = 0, before = 0;
+      if (r.total) {
+        const perDay = new Map((r.total.stats || []).map(x => [x.day, x.daily || 0]));
+        for (const [day, n] of perDay) day >= first ? now += n : before += n;
+        days = [];
+        for (const t = new Date(s.start), today = ymd(new Date()); ymd(t) <= today; t.setDate(t.getDate() + 1))
+          days.push({ day: ymd(t), n: perDay.get(ymd(t)) || 0 });
+      }
+      let projRows = null, pageRows = null;
+      if (r.hits && projs) {
+        const hits = new Map(r.hits.hits.map(h => [h.path, h.count]));
+        projRows = projs.map(p => ({ label: p.title, color: p.color, slug: p.slug, n: hits.get('/#/projects/' + p.slug) || 0 })).sort((a, b) => b.n - a.n);
+        const named = { '/': 'Homepage', '/#/projects': 'Projects list', '/#/about': 'About' };
+        const known = new Set([...Object.keys(named), ...projs.map(p => '/#/projects/' + p.slug)]);
+        pageRows = [...Object.entries(named).map(([p, label]) => ({ label, n: hits.get(p) || 0 })),
+          ...r.hits.hits.filter(h => !h.event && !known.has(h.path)).map(h => ({ label: h.path, n: h.count }))].sort((a, b) => b.n - a.n);
+      }
+      const sizes = statRows(r.size);
+      const allSizes = sizes && sizes.reduce((a, x) => a + x.n, 0);
+      const phonePct = sizes && allSizes ? Math.round(sizes.filter(x => /phone/i.test(x.label)).reduce((a, x) => a + x.n, 0) / allSizes * 100) : null;
+      const refs = r.refs && (r.refs.stats || []).map(x => ({ label: x.name || 'Direct / unknown', n: x.count }));
+
+      // the headline, in pink
+      const hero = card('sb-hero', 4, 'total');
+      let pill = null;
+      if (r.total && d && before) {
+        const pct = Math.round((now - before) / before * 100);
+        pill = el('span', 'sb-pill', `${pct > 0 ? '↑' : pct < 0 ? '↓' : '→'} ${Math.abs(pct)}%`);
+        pill.title = `on the ${label} before`;
+      }
+      head(hero, 'Visitors', pill);
+      if (r.total) {
+        const big = el('div', 'sb-big');
+        fresh.has('total') ? countUp(big, now) : big.textContent = now.toLocaleString();
+        hero.append(big, el('div', 'sb-sub', `${during(d)}${d && before ? `, against ${before.toLocaleString()} the ${label} before` : ''}`));
+      } else hero.append(sk('st-sk-big'), sk('st-sk-line'));
+      const minis = el('div', 'sb-minis');
+      for (const [name, val] of [['Project views', projRows && projRows.reduce((a, x) => a + x.n, 0).toLocaleString()],
+          ['On phones', sizes && (phonePct == null ? '—' : phonePct + '%')]]) {
+        const m = el('div'); m.append(el('span', null, name), val != null ? val : sk('st-sk-val')); minis.append(m);
+      }
+      hero.append(minis);
+
+      // visits over time: bars in tracks, or a calendar of days (up to 90 days)
+      const vis = card('sb-visits', 8, 'total'), canCal = !days || days.length <= 92;
+      if (!canCal) visView = 'Bars';
+      head(vis, 'Visits', canCal ? seg(['Bars', 'Calendar'], visView, o => { visView = o; repaint(); }) : null);
+      const plot = el('div', 'sb-plot'), tip = tipper(plot);
+      vis.append(plot);
+      if (!days) {
+        const b = el('div', 'sb-bars');
+        for (let i = 0; i < 30; i++) { const t = el('div', 'sb-track'), f = sk('st-sk-bar'); f.style.height = 18 + (i * 37 % 55) + '%'; t.append(f); b.append(t); }
+        plot.prepend(b);
+      } else if (visView === 'Calendar') {
+        const cal = el('div', 'sb-cal' + (days.length > 35 ? ' small' : ''));
+        for (let i = 0; i < 7; i++) cal.append(el('div', 'wd', new Date(2026, 10, 1 + i).toLocaleDateString(undefined, { weekday: 'narrow' }))); // 1 Nov 2026 is a Sunday
+        for (let i = new Date(days[0].day + 'T12:00').getDay(); i > 0; i--) cal.append(el('div'));
+        const max = Math.max(1, ...days.map(x => x.n));
+        days.forEach((x, i) => { // one hue, darker the busier: pale pink to full pink
+          const k = x.n / max, dot = el('div', 'sb-dot' + (x.n ? k > .5 ? ' hot' : ' on' : ''), x.n ? String(x.n) : '·');
+          if (x.n) dot.style.background = `color-mix(in srgb, #E7006A ${Math.round(14 + 86 * k)}%, #f1f0ed)`;
+          dot.style.setProperty('--i', i);
+          tip(dot, `${dayName(x.day, { weekday: 'short', day: 'numeric', month: 'short' })} · ${visitors(x.n)}`);
+          cal.append(dot);
+        });
+        plot.prepend(cal);
+      } else {
+        const step = days.length > 92 ? 7 : 1, bars = [];
+        for (let i = 0; i < days.length; i += step) {
+          const g = days.slice(i, i + step);
+          bars.push({ day: g[0].day, to: g.at(-1).day, n: g.reduce((a, x) => a + x.n, 0) });
+        }
+        const max = Math.max(1, ...bars.map(b => b.n)), wrap = el('div', 'sb-bars');
+        wrap.style.setProperty('--gap', bars.length > 60 ? '2px' : bars.length > 20 ? '3px' : '6px');
+        const when = b => b.day === b.to ? dayName(b.day, { weekday: 'short', day: 'numeric', month: 'short' })
+          : dayName(b.day, { day: 'numeric', month: 'short' }) + ' – ' + dayName(b.to, { day: 'numeric', month: 'short' });
+        bars.forEach((b, i) => {
+          const t = el('div', 'sb-track'), f = el('div', 'sb-bar');
+          f.style.height = b.n ? b.n / max * 100 + '%' : '0';
+          f.style.setProperty('--i', i);
+          t.append(f);
+          tip(t, `${when(b)} · ${visitors(b.n)}`);
+          wrap.append(t);
+        });
+        const axis = el('div', 'st-axis');
+        axis.append(el('span', null, dayName(days[0].day, { day: 'numeric', month: 'short' })), el('span', null, `busiest ${max.toLocaleString()}`), el('span', null, 'Today'));
+        plot.prepend(wrap, axis);
+      }
+
+      // events: GoatCounter counts each path once per visit (visitsOf); a click's path~all counts every click (clicksOf)
+      const ev = new Map((r.hits?.hits || []).filter(h => h.event).map(h => [h.path, h]));
+      const visitsOf = p => ev.get(p)?.count || 0, clicksOf = p => ev.get(p + '~all')?.count || 0;
+      const evList = pre => [...ev.values()].filter(h => h.path.startsWith(pre) && !h.path.endsWith('~all'));
+      const plural = (n, one, many = one + 's') => `${n.toLocaleString()} ${n === 1 ? one : many}`;
+      const both = (n, c, unit = 'click') => plural(n, 'visit') + (c >= n && c ? ' · ' + plural(c, unit) : '');
+      const fact = (c, name, val) => { const f = el('div', 'sb-fact'); f.append(el('span', null, name), el('strong', null, val)); c.append(f); };
+      function pairList(c, rows, unit = 'click') { // visits that did it (the meter), and the total beside it
+        const m = Math.max(1, ...rows.map(x => x.n));
+        rows.forEach((x, i) => {
+          const row = el('div', 'sb-row'), meter = el('div', 'sb-meter'), fill = el('i'), n = el('span', 'st-n', x.n.toLocaleString());
+          if (x.c >= x.n && x.c) n.append(el('small', null, ' · ' + plural(x.c, unit)));
+          fill.style.width = x.n / m * 100 + '%'; fill.style.setProperty('--i', i);
+          meter.append(fill);
+          row.append(el('span', 'st-label', x.label), n, meter);
+          c.append(row);
+        });
+      }
+      function projectDetail(x) { // a case study opened up: how far down people got, and what they clicked in it
+        const det = el('div', 'sb-detail'), reachBox = el('div'), facts = el('div', 'sb-facts');
+        reachBox.append(el('h4', null, 'Scroll reach'));
+        for (const m of [25, 50, 75, 100]) {
+          const n = visitsOf(`scroll/${x.slug}/${m}`), row = el('div', 'sb-reach-row'), bar = el('div', 'sb-meter'), fill = el('i');
+          fill.style.width = (x.n ? Math.min(1, n / x.n) * 100 : 0) + '%'; fill.style.background = x.color;
+          bar.append(fill);
+          row.append(el('span', null, m + '%'), bar, el('span', 'st-n', x.n ? `${n} of ${x.n}` : String(n)));
+          reachBox.append(row);
+        }
+        reachBox.append(el('p', 'st-muted sb-small', 'Visits that got this far down the page. Reaching it doesn’t mean reading it.'));
+        const imgs = evList('img/').filter(h => h.title === x.slug), iv = imgs.reduce((a, h) => a + h.count, 0), ic = imgs.reduce((a, h) => a + clicksOf(h.path), 0);
+        fact(facts, 'Images clicked', imgs.length ? plural(imgs.length, 'image') + (ic >= iv && ic ? ' · ' + plural(ic, 'click') : '') : 'None yet');
+        const outs = evList(`out/${x.slug}/`);
+        fact(facts, 'Links out', outs.length ? outs.map(h => `${h.path.split('/').pop()}: ${both(h.count, clicksOf(h.path))}`).join('\n') : 'None yet');
+        const nx = visitsOf('next/' + x.slug);
+        fact(facts, 'Went on to the next project', nx ? both(nx, clicksOf('next/' + x.slug)) : 'None yet');
+        det.append(reachBox, facts);
+        return det;
+      }
+
+      // projects, each in its own colour; tap one to open its detail
+      const pc = card('sb-projects', 7, 'hits');
+      head(pc, 'Projects opened', projRows ? el('span', 'sb-note', `${projRows.reduce((a, x) => a + x.n, 0).toLocaleString()} opens · tap one for more`) : null);
+      if (!projRows) skRows(pc);
+      else {
+        const m = Math.max(1, ...projRows.map(x => x.n));
+        projRows.forEach((x, i) => {
+          const on = openProj === x.slug, row = el('button', 'sb-row sb-prow' + (on ? ' open' : '')), lab = el('span', 'st-label'), meter = el('div', 'sb-meter'), fill = el('i');
+          row.type = 'button'; row.setAttribute('aria-expanded', String(on));
+          lab.append(tag(x), el('span', 'sb-chev', on ? '–' : '+'));
+          fill.style.width = x.n / m * 100 + '%'; fill.style.setProperty('--i', i); fill.style.background = x.color;
+          meter.append(fill);
+          row.append(lab, el('span', 'st-n', x.n.toLocaleString()), meter);
+          row.onclick = () => { openProj = on ? null : x.slug; repaint(); };
+          pc.append(row);
+          if (on && r.hits) pc.append(projectDetail(x));
+        });
+      }
+
+      // what stands out, in words: only what the numbers support. Under MIN visitors nothing is called a
+      // pattern, only counted; "most" is said only when one is strictly ahead
+      const dark = card('sb-dark', 5, 'refs');
+      head(dark, 'Noted');
+      const notes = el('div', 'sb-insights'), MIN = 10;
+      const say = (...parts) => { const p = el('p'); p.append(...parts); notes.append(p); };
+      if (!days || !projRows || !refs) { for (let i = 0; i < 3; i++) { const l = sk('st-sk-row'); l.style.width = 90 - i * 18 + '%'; notes.append(l); } }
+      else if (!now) notes.append(el('p', null, `No visitors ${during(d)} yet.`), el('p', 'dim', 'Share a tagged link, like ?ref=linkedin, to see where people come from.'));
+      else {
+        if (now < MIN) notes.append(el('p', 'dim', `${plural(now, 'visitor')} ${during(d)}: too few to call a pattern, so these are plain counts.`));
+        else if (d && before >= MIN) { const pct = Math.round((now - before) / before * 100); say(`${pct >= 0 ? 'Up' : 'Down'} ${Math.abs(pct)}% on the ${label} before (${before} → ${now} visitors).`); }
+        const [p1, p2] = projRows;
+        if (p1?.n) say(tag(p1), p1.n > (p2?.n || 0) ? ` was opened most: ${plural(p1.n, 'visit')}.` : ` and ${p2.label} are level at ${plural(p1.n, 'visit')} each.`);
+        else say('No project opened yet.');
+        const opens = projRows.reduce((t, x) => t + x.n, 0), deep = projRows.reduce((t, x) => t + visitsOf(`scroll/${x.slug}/75`), 0);
+        if (opens) say(`Of ${plural(opens, 'project open')}, ${deep} scrolled at least 75% of the way down.`);
+        const cont = [['email', 'contact/email'], ['Instagram', 'contact/instagram'], ['résumé', 'contact/resume']].map(([n, p]) => [n, visitsOf(p)]).filter(x => x[1]);
+        say(cont.length ? `Contact clicks: ${cont.map(([n, v]) => `${n} in ${plural(v, 'visit')}`).join(', ')}.` : 'No contact link clicked yet.');
+        const [r1, r2] = refs;
+        if (r1) say(r1.label === 'Direct / unknown' ? (r1.n > now / 2 ? 'Most visits have no known source (direct / unknown).' : 'Top source: direct / unknown.')
+          : r1.n > (r2?.n || 0) ? `Top source: ${r1.label} (${plural(r1.n, 'visit')}).` : `Top sources are level: ${r1.label} and ${r2.label}.`);
+        const shown = visitsOf('bubble/shown'), played = visitsOf('letters/played');
+        if (shown) notes.append(el('p', 'dim', `${visitsOf('bubble/manual')} of ${plural(shown, 'bubble')} popped by hand; letters played with in ${plural(played, 'visit')}.`));
+      }
+      dark.append(notes);
+
+      // contact links: visits that clicked each, and every click
+      const cc = card('sb-contact', 4, 'hits');
+      head(cc, 'Contact clicks');
+      if (!r.hits) skRows(cc, 3);
+      else {
+        pairList(cc, [['Email', 'contact/email'], ['Instagram', 'contact/instagram'], ['Résumé', 'contact/resume']].map(([label, p]) => ({ label, n: visitsOf(p), c: clicksOf(p) })));
+        cc.append(el('p', 'st-muted sb-small', 'Visits that clicked each one, then total clicks.'));
+      }
+
+      // the homepage: the bubble, and the letters (grabs only; nothing is sent while letters move)
+      const hc = card('sb-home', 8, 'hits');
+      head(hc, 'Homepage play');
+      if (!r.hits) skRows(hc, 3);
+      else {
+        const shown = visitsOf('bubble/shown'), facts = el('div', 'sb-facts sb-facts-row');
+        fact(facts, 'Bubble shown', plural(shown, 'visit'));
+        fact(facts, 'Popped by hand', shown ? `${visitsOf('bubble/manual')} of ${shown}` : String(visitsOf('bubble/manual')));
+        fact(facts, 'Popped itself', String(visitsOf('bubble/auto')));
+        fact(facts, 'Skipped for Projects', String(visitsOf('bubble/skipped')));
+        fact(facts, 'Played with letters', plural(visitsOf('letters/played'), 'visit'));
+        const counts = LETTERS.map(id => visitsOf('letter/' + id)), top = Math.max(0, ...counts), lone = counts.filter(n => n === top).length === 1;
+        const word = el('div', 'sb-letters');
+        LETTERS.forEach((id, i) => { // in the name's own order, darker pink the more it was grabbed; the clear favourite ringed
+          if (i === 7) word.append(el('span', 'sb-gap'));
+          const k = top ? counts[i] / top : 0, t = el('div', 'sb-letter' + (k > .5 ? ' hot' : '') + (top && lone && counts[i] === top ? ' top' : ''));
+          if (counts[i]) t.style.background = `color-mix(in srgb, #E7006A ${Math.round(14 + 86 * k)}%, #f1f0ed)`;
+          t.append(el('b', null, id.split('-')[1]), el('span', null, String(counts[i])));
+          t.title = `${id.split('-')[1]} in ${id.split('-')[0].toUpperCase()}: grabbed in ${plural(counts[i], 'visit')}`;
+          word.append(t);
+        });
+        hc.append(facts, el('h4', 'sb-sub-h', 'Letters grabbed, in visits'), word);
+      }
+
+      // where from, and the smaller lists behind tabs
+      const wf = card('sb-refs', 6, 'refs');
+      head(wf, 'Where from');
+      meters(wf, refs);
+      const lists = { Pages: pageRows, Countries: statRows(r.loc), Screens: sizes, Systems: statRows(r.sys) };
+      const keyOf = { Pages: 'hits', Countries: 'loc', Screens: 'size', Systems: 'sys' };
+      const tc = card('sb-tabs', 6, keyOf[tab]);
+      head(tc, tab, seg(Object.keys(lists), tab, o => { tab = o; repaint(); }));
+      tc.firstChild.firstChild.remove(); // the tabs name the list themselves
+      tc.firstChild.style.justifyContent = 'flex-start';
+      meters(tc, lists[tab]);
+
+      // images clicked in the case studies, as thumbnails with their count and project
+      const ic = card('sb-images', 8, 'hits');
+      const clicks = r.hits && evList('img/').sort((a, b) => b.count - a.count);
+      head(ic, 'Images clicked', clicks ? el('span', 'sb-note', plural(clicks.reduce((a, h) => a + clicksOf(h.path), 0), 'click')) : null);
+      if (!clicks) skRows(ic, 2);
+      else if (!clicks.length) ic.append(el('p', 'st-muted', 'Nothing clicked yet'));
+      else {
+        const wall = el('div', 'sb-imgs');
+        clicks.slice(0, 18).forEach((h, i) => {
+          const key = h.path.slice(4), it = media[key], tile = el('div', 'sb-img'), img = el('img'), meta = el('div', 'sb-img-meta');
+          img.alt = ''; img.loading = 'lazy';
+          const src = key === 'about/prestin-scooter' ? 'about/prestin-scooter-800.jpg' : it && it.base + (it.kind === 'image' ? it.sizes[0].file : it.poster);
+          if (src) img.src = src;
+          tile.style.setProperty('--i', i);
+          meta.append(el('span', 'st-n', both(h.count, clicksOf(h.path))));
+          const p = projs?.find(q => q.slug === h.title);
+          meta.append(p ? tag({ label: p.title, color: p.color }) : el('span', 'st-muted', h.title === 'about' ? 'About' : h.title || ''));
+          tile.append(img, meta);
+          wall.append(tile);
+        });
+        ic.append(wall);
+      }
+
+      // site health: script errors on real visits
+      const hl = card('sb-health', 4, 'hits');
+      head(hl, 'Site health');
+      if (!r.hits) skRows(hl, 2);
+      else {
+        const errsL = evList('error/');
+        if (!errsL.length) hl.append(el('p', null, 'No script errors recorded.'));
+        else {
+          pairList(hl, errsL.map(h => ({ label: `${h.path.slice(6)}: ${h.title || '?'}`, n: h.count, c: clicksOf(h.path) })), 'time');
+          hl.append(el('p', 'st-muted sb-small', 'Visits that hit an error, then how many times. The message is the latest one.'));
+        }
+      }
+      if (r.hits?.more) hl.append(el('p', 'st-muted sb-small', 'Some rarely used paths didn’t fit and aren’t counted here.'));
+
+      body.append(grid);
+    }
+
+    let fadeT = 0; // the fade-out's timer, and the wipe's
+    function show(o) { // o: where the word was, when it was spelled
+      if (!open) {
+        open = true; clearTimeout(fadeT);
+        box.classList.remove('in', 'out', 'cut', 'enter'); box.hidden = false; box.scrollTop = 0;
+        found = !!o;
+        let shown = false;
+        if (o && !still.matches) try { reveal(o); shown = true; } catch (e) { console.error('[stats] reveal', e); }
+        if (!shown) { document.getElementById('stats-wipe').hidden = true; box.classList.remove('cut', 'enter'); box.offsetWidth; box.classList.add('in'); } // start from transparent
+      }
+      load();
+    }
+    function reveal(o) { // a pink circle, then the page in a second one, both opening out of the word
+      const wipe = document.getElementById('stats-wipe');
+      const R = Math.hypot(Math.max(o.x, innerWidth - o.x), Math.max(o.y, innerHeight - o.y)) + 24;
+      const from = `circle(0px at ${o.x}px ${o.y}px)`, to = `circle(${R}px at ${o.x}px ${o.y}px)`;
+      wipe.hidden = false;
+      wipe.animate([{ clipPath: from }, { clipPath: to }], { duration: 560, easing: 'cubic-bezier(.7,0,.2,1)', fill: 'both' });
+      box.classList.add('cut', 'in', 'enter');
+      box.animate([{ clipPath: from }, { clipPath: to }], { duration: 720, delay: 160, easing: 'cubic-bezier(.7,0,.2,1)', fill: 'backwards' });
+      enterAt = performance.now();
+      clearTimeout(fadeT);
+      fadeT = setTimeout(() => { wipe.hidden = true; wipe.getAnimations().forEach(a => a.cancel()); }, 900);
+      setTimeout(() => { enterAt = 0; box.classList.remove('enter', 'cut'); }, 2000);
+    }
+    function hide() { // back to whatever the address said before #/stats
+      open = false; run++; enterAt = 0;
+      document.getElementById('stats-wipe').hidden = true;
+      box.classList.remove('cut', 'enter'); box.classList.add('out'); box.classList.remove('in');
+      fadeT = setTimeout(() => { box.hidden = true; box.classList.remove('out'); }, still.matches ? 0 : 350);
+      history.replaceState({ view, scroll: 0 }, '', hrefOf(view));
+    }
+    addEventListener('keydown', e => { if (open && e.key === 'Escape') { e.stopImmediatePropagation(); hide(); } }, true);
+    return { show };
+  })();
+
+  window.ArtisStats = o => { // spelling STATS in the masthead
+    try { localStorage.setItem('skipgc', 't'); } catch {}
+    if (GC) stats.show(o);
+  };
+  function statsDoor() {
+    if (!/^#\/stats\/?$/.test(location.hash)) return false;
+    try { localStorage.setItem('skipgc', 't'); } catch {}
+    if (GC) stats.show();
+    return true;
+  }
+
   function saveScroll() { if (history.state) history.replaceState({ ...history.state, scroll: sheet.scrollTop }, ''); }
   function go(v) { // a new history entry (a link, a button, next project)
     if (keyOf(v) === keyOf(view)) return;
     saveScroll();
     history.pushState({ view: v, scroll: 0, prev: keyOf(view) }, '', hrefOf(v));
+    count(v);
     show(v, 0);
   }
   function up() { // Esc, Close, ← Projects: one level toward home; step back when that's where we came from
     const target = view.name === 'project' ? { name: 'list' } : { name: 'home' };
     if (history.state?.prev === keyOf(target)) history.back(); else go(target);
   }
-  addEventListener('popstate', e => show(e.state?.view ?? parse(location.hash), e.state?.scroll ?? 0));
+  addEventListener('hashchange', statsDoor); // Safari can send only this when #/stats is typed onto an open page
+  addEventListener('popstate', e => {
+    if (statsDoor()) return;
+    const v = e.state?.view ?? parse(location.hash);
+    count(v);
+    show(v, e.state?.scroll ?? 0);
+  });
 
   /* the sheet and the letters */
   function openSheet(then) {
@@ -2503,8 +3355,19 @@
       if (v.name === 'about') { renderAbout(); setTimeout(() => view === v && stage.wobble(), 500); }
       setScroll(scroll);
       playVisible();
+      reach = 0; requestAnimationFrame(() => requestAnimationFrame(checkReach)); // a short page is reached without scrolling
     });
   }
+  /* scroll reach: how far down a case study has been on screen (25/50/75/100%), once per visit per
+     project. It says how far someone got, not that they read it */
+  let reach = 0, reachRaf = 0;
+  function checkReach() {
+    if (view.name !== 'project' || !sheetOpen || !sheet.scrollHeight) return;
+    const seen = (sheet.scrollTop + sheet.clientHeight) / sheet.scrollHeight;
+    for (const m of [25, 50, 75, 100])
+      if (m > reach && seen >= (m === 100 ? .995 : m / 100)) { reach = m; track(`scroll/${view.slug}/${m}`, { title: view.slug }); }
+  }
+  sheet.addEventListener('scroll', () => { if (!reachRaf) reachRaf = requestAnimationFrame(() => { reachRaf = 0; checkReach(); }); }, { passive: true });
 
   /* media */
   const SIZES = '91vw';
@@ -2514,6 +3377,7 @@
     fig.className = 'm-wrap'; fig.style.setProperty('--max', it.w + 'px');
     fig.style.setProperty('--ar', (it.w / it.h).toFixed(4));
     if (ref.inset) { fig.classList.add('m-inset'); const p = (1 - ref.inset) / 2 * 100; fig.style.setProperty('--pad', (p * it.h / it.w).toFixed(2) + '% ' + p.toFixed(2) + '%'); fig.style.setProperty('--edge', p.toFixed(2) + '%'); }
+    fig.dataset.src = ref.src; // which file this is, for the click count in the stats
     if (ref.n) fig.dataset.n = ref.n; // the image's fixed number ("n" in projects.json), kept in the page but not shown
     let el;
     if (it.kind === 'image') {
@@ -2623,7 +3487,7 @@
       text.append(textEl('p', '', t));
     const meta = document.createElement('div'); meta.className = 'case-meta';
     const mail = textEl('a', '', 'partisuw@gmail.com'); mail.href = 'mailto:partisuw@gmail.com';
-    const ig = textEl('a', 'ig-link', '@iprestin'); Object.assign(ig, { href: 'https://www.instagram.com/iprestin/', target: '_blank', rel: 'noopener' });
+    const ig = textEl('a', 'ig-link', 'iprestin'); Object.assign(ig, { href: 'https://www.instagram.com/iprestin/', target: '_blank', rel: 'noopener' });
     const cv = textEl('a', '', 'Resume (PDF)'); Object.assign(cv, { href: 'prestin-artis-resume.pdf', target: '_blank', rel: 'noopener' });
     for (const a of [mail, ig, cv]) { const d = document.createElement('div'); d.append(a); meta.append(d); }
     head.append(side, text, meta);
@@ -2633,7 +3497,7 @@
     img.srcset = [800, 1600, 2400].map(w => `about/prestin-scooter-${w}.jpg ${w}w`).join(', ');
     img.sizes = '(max-width: 543px) 100vw, 30vw'; img.src = 'about/prestin-scooter-1600.jpg'; img.dataset.zoom = 'about/prestin-scooter-2400.jpg';
     img.alt = 'Prestin, laughing in white sunglasses, balanced upside down on a stool holding a scooter overhead';
-    img.width = 2400; img.height = 3600; img.loading = 'lazy'; ph.append(img);
+    img.width = 2400; img.height = 3600; img.loading = 'lazy'; ph.append(img); ph.dataset.src = 'about/prestin-scooter';
     if (PHONE.matches) {
       const top = document.createElement('div'); top.className = 'about-top';
       img.sizes = '50vw'; top.append(portrait, ph); c.append(top, head);
@@ -2831,6 +3695,11 @@
 
   /* zoom: tap an image for the largest size, or a zoomable video to play it large from the same moment */
   const zImg = zoom.querySelector('img'), zVid = zoom.querySelector('video');
+  // every image click is a GoatCounter event (img/<file>, titled with the project), zoomable or not
+  projView.addEventListener('click', e => {
+    const fig = e.target.closest('figure[data-src]');
+    if (fig) track('img/' + fig.dataset.src, { title: view.slug || view.name, total: true });
+  });
   projView.addEventListener('click', e => {
     const el = e.target.closest('.zoomable'); if (!el) return;
     if (el.tagName === 'VIDEO') {
@@ -2905,6 +3774,17 @@
     else if (view.name !== 'home') up();
   });
 
+  /* contact, outbound and next-project clicks, wherever the link is (the title says where it was) */
+  document.addEventListener('click', e => {
+    const a = e.target.closest?.('a[href]'); if (!a) return;
+    const href = a.getAttribute('href'), from = infoOpen ? 'info' : soonOpen ? 'vcd' : view.name === 'project' ? view.slug : view.name;
+    if (href.startsWith('mailto:')) track('contact/email', { title: from, total: true });
+    else if (/(^|\.)instagram\.com$/.test(a.hostname)) track('contact/instagram', { title: from, total: true });
+    else if (/resume[^/]*\.pdf$/i.test(href)) track('contact/resume', { title: from, total: true });
+    else if (a.classList.contains('next') && view.name === 'project') track('next/' + view.slug, { title: href.split('/').pop(), total: true });
+    else if (a.host && a.host !== location.host) track(`out/${from}/${a.hostname.replace(/^www\./, '')}`, { title: from, total: true });
+  }, true);
+
   /* boot: load the data, then show whatever the address asks for (a direct link opens straight in) */
   const ready = Promise.all([
     // no-cache: always revalidate, so a browser never pairs fresh pages with stale project data
@@ -2912,7 +3792,9 @@
     fetch('projects/media.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : {}).catch(() => ({})),
   ]).then(([d, m]) => { data = d; media = m; renderList(); });
   // a link to the list or one project opens straight into it (a refresh stays where you were)
+  statsDoor();
   const first = parse(location.hash);
+  if (!/^#\/stats\/?$/.test(location.hash)) count(first);
   history.replaceState({ view: first, scroll: 0 }, '', hrefOf(first));
   if (first.name !== 'home') ready.then(() => show(first, 0));
 })();
