@@ -2703,11 +2703,12 @@ if (/^(localhost|127\.|10\.|192\.168\.)/.test(location.hostname)) {
   addEventListener('error', e => { if (e.message) jsError('js', e.message); });
   addEventListener('unhandledrejection', e => jsError('promise', e.reason?.message || e.reason));
   /* a ping for each new visitor: a push on the ntfy app for anyone subscribed to NTFY (ntfy.sh), and an
-     email to PING_TO through FormSubmit (ntfy no longer emails without an account; FormSubmit's first
-     message asks PING_TO to activate it once). One per visit, 8 s in (or on leaving, if sooner), saying what they looked
+     email to PING_TO through Web3Forms (ntfy no longer emails without an account; FormSubmit, tried
+     first, went down). One per visit, 8 s in (or on leaving, if sooner), saying what they looked
      at, where they came from and on what. Never from a browser that has opened #/stats (skipgc), so your
      own visits stay quiet; tapping it opens the stats */
   const NTFY = 'prestin-dlvr33hou2l0e6sfvg', PING_TO = 'partisuw@gmail.com';
+  const W3F_KEY = 'fab09da2-e801-4350-9882-0bc7f082a12a'; // Web3Forms access key (public by design; emails go only to PING_TO). Empty: no email
   const looked = [];
   let pinged = false;
   try { pinged = sessionStorage.getItem('pinged') === '1'; } catch {}
@@ -2726,14 +2727,16 @@ if (/^(localhost|127\.|10\.|192\.168\.)/.test(location.hostname)) {
     let from = tag;
     if (!from) try { const r = new URL(document.referrer); if (r.host !== location.host) from = r.host.replace(/^www\./, ''); } catch {}
     const on = matchMedia('(pointer: coarse)').matches ? (Math.min(screen.width, screen.height) < 600 ? 'a phone' : 'a tablet') : 'a computer';
-    const msg = `Looked at: ${looked.join(', ')}\nFrom: ${from || 'Direct / unknown'}\nOn: ${on}`;
+    const names = looked.map(l => data?.projects.find(p => p.slug === l)?.title || l); // a slug noted before the data loaded
+    const msg = `Looked at: ${names.join(', ')}\nFrom: ${from || 'Direct / unknown'}\nOn: ${on}`;
     if (DRY) { console.log('[ping]', msg); return; }
     const q = new URLSearchParams({ title: (LOCAL ? '[test] ' : '') + 'New visitor on your site', tags: 'eyes', click: location.origin + location.pathname + '#/stats' });
     navigator.sendBeacon(`https://ntfy.sh/${NTFY}?${q}`, msg);
-    fetch(`https://formsubmit.co/ajax/${PING_TO}`, { method: 'POST', keepalive: true, // keepalive: still sent if they're leaving
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({ _subject: (LOCAL ? '[test] ' : '') + 'New visitor on your site', _template: 'box', _captcha: 'false', message: msg, stats: location.origin + location.pathname + '#/stats' }) })
-      .catch(() => {});
+    if (W3F_KEY) { // email: Web3Forms sends it to the address the key was made for (PING_TO)
+      const fd = new FormData();
+      for (const [k, v] of Object.entries({ access_key: W3F_KEY, subject: (LOCAL ? '[test] ' : '') + 'New visitor on your site', from_name: 'Your portfolio', message: msg + '\n\nStats: ' + location.origin + location.pathname + '#/stats' })) fd.append(k, v);
+      navigator.sendBeacon('https://api.web3forms.com/submit', fd);
+    }
   }
   addEventListener('pagehide', ping);
 
@@ -2756,6 +2759,7 @@ if (/^(localhost|127\.|10\.|192\.168\.)/.test(location.hostname)) {
     const KEY = 'gc-key', CACHE = `gc-cache:${FIXTURE ? 'fixture' : SITE}:`, API = `https://${SITE}.goatcounter.com/api/v0`;
     const RANGES = [[7, '7 days'], [30, '30 days'], [90, '90 days'], [365, '1 year'], [0, 'All time']];
     const SINCE = '2026-10-29'; // the day counting began: All time starts here
+    const VISITS_SINCE = '2026-10-30'; // the day the 'visit' event went live (visits before it weren't counted that way)
     const LETTERS = ['prestin-P','prestin-R','prestin-E','prestin-S','prestin-T','prestin-I','prestin-N','artis-A','artis-R','artis-T','artis-I','artis-S'];
     const still = matchMedia('(prefers-reduced-motion: reduce)');
     let days = 30, open = false, run = 0, projs = null, status = null, recent = [];
@@ -2897,7 +2901,9 @@ if (/^(localhost|127\.|10\.|192\.168\.)/.test(location.hostname)) {
       if (!projs) fetch('projects.json').then(r => r.json()).then(j => j.projects).catch(() => []).then(p => { projs = p; soon(); });
       const q = { start: s.start.toISOString(), end: s.end.toISOString() }, lim = n => ({ ...q, limit: n });
       // the total covers this range and the one before it in one call, for the change figure
-      const jobs = [['total', () => api('/stats/total', { ...q, start: s.prev.toISOString() }, me)], ['hits', () => allHits(q, me)],
+      // 'total' is the visits in the range before, for the change figure (none before All time)
+      const jobs = [['total', () => d ? api('/stats/hits', { start: s.prev.toISOString(), end: s.start.toISOString(), limit: 1, path_by_name: true, include_paths: 'visit' }, me) : Promise.resolve({ hits: [] })],
+        ['hits', () => allHits(q, me)],
         ...[['refs', '/stats/toprefs', 10], ['size', '/stats/sizes', 8], ['loc', '/stats/locations', 8], ['sys', '/stats/systems', 8]].map(([k, p, n]) => [k, () => api(p, lim(n), me)])];
       try {
         await Promise.all(jobs.map(([k, go]) => go().then(v => {
@@ -2946,7 +2952,7 @@ if (/^(localhost|127\.|10\.|192\.168\.)/.test(location.hostname)) {
         node.onpointerleave = () => { tip.hidden = true; };
       };
     }
-    const visitors = n => `${n.toLocaleString()} ${n === 1 ? 'visitor' : 'visitors'}`;
+    const visitors = n => `${n.toLocaleString()} ${n === 1 ? 'visit' : 'visits'}`;
     const skRows = (c, n = 4) => { for (let i = 0; i < n; i++) { const r = sk('st-sk-row'); r.style.width = 85 - i * 14 + '%'; c.append(r); } };
 
     function meters(c, rows) { // label, count, a rounded meter in its track; projects fill in their own colour
@@ -2982,11 +2988,14 @@ if (/^(localhost|127\.|10\.|192\.168\.)/.test(location.hostname)) {
         return g;
       };
 
-      // what everything below is worked out from
+      // what everything below is worked out from. Visits are the 'visit' event (one per visit), counted
+      // since VISITS_SINCE; GoatCounter's own total counts a visit again for every page and event it touched
       let days = null, now = 0, before = 0;
-      if (r.total) {
-        const perDay = new Map((r.total.stats || []).map(x => [x.day, x.daily || 0]));
-        for (const [day, n] of perDay) day >= first ? now += n : before += n;
+      if (r.total && r.hits) {
+        const vh = r.hits.hits.find(h => h.path === 'visit'), perDay = new Map();
+        for (const x of vh?.stats || []) perDay.set(x.day, (perDay.get(x.day) || 0) + (x.daily || 0));
+        now = vh?.count || 0;
+        before = r.total.hits?.find(h => h.path === 'visit')?.count || 0;
         days = [];
         for (const t = new Date(s.start), today = ymd(new Date()); ymd(t) <= today; t.setDate(t.getDate() + 1))
           days.push({ day: ymd(t), n: perDay.get(ymd(t)) || 0 });
@@ -3006,18 +3015,19 @@ if (/^(localhost|127\.|10\.|192\.168\.)/.test(location.hostname)) {
       const refs = r.refs && (r.refs.stats || []).map(x => ({ label: x.name || 'Direct / unknown', n: x.count }));
 
       // the headline, in pink
-      const hero = card('sb-hero', 4, 'total');
+      const hero = card('sb-hero', 4, 'hits');
       let pill = null;
-      if (r.total && d && before) {
+      if (days && d && before) {
         const pct = Math.round((now - before) / before * 100);
         pill = el('span', 'sb-pill', `${pct > 0 ? '↑' : pct < 0 ? '↓' : '→'} ${Math.abs(pct)}%`);
         pill.title = `on the ${label} before`;
       }
-      head(hero, 'Visitors', pill);
-      if (r.total) {
+      head(hero, 'Visits', pill);
+      if (days) {
         const big = el('div', 'sb-big');
-        fresh.has('total') ? countUp(big, now) : big.textContent = now.toLocaleString();
+        fresh.has('hits') ? countUp(big, now) : big.textContent = now.toLocaleString();
         hero.append(big, el('div', 'sb-sub', `${during(d)}${d && before ? `, against ${before.toLocaleString()} the ${label} before` : ''}`));
+        if (ymd(s.start) < VISITS_SINCE) hero.append(el('div', 'sb-sub', `Counted from ${dayName(VISITS_SINCE, { day: 'numeric', month: 'short' })}`));
       } else hero.append(sk('st-sk-big'), sk('st-sk-line'));
       const minis = el('div', 'sb-minis');
       for (const [name, val] of [['Project views', projRows && projRows.reduce((a, x) => a + x.n, 0).toLocaleString()],
@@ -3027,7 +3037,7 @@ if (/^(localhost|127\.|10\.|192\.168\.)/.test(location.hostname)) {
       hero.append(minis);
 
       // visits over time: bars in tracks, or a calendar of days (up to 90 days)
-      const vis = card('sb-visits', 8, 'total'), canCal = !days || days.length <= 92;
+      const vis = card('sb-visits', 8, 'hits'), canCal = !days || days.length <= 92;
       if (!canCal) visView = 'Bars';
       head(vis, 'Visits', canCal ? seg(['Bars', 'Calendar'], visView, o => { visView = o; repaint(); }) : null);
       const plot = el('div', 'sb-plot'), tip = tipper(plot);
@@ -3137,10 +3147,10 @@ if (/^(localhost|127\.|10\.|192\.168\.)/.test(location.hostname)) {
       const notes = el('div', 'sb-insights'), MIN = 10;
       const say = (...parts) => { const p = el('p'); p.append(...parts); notes.append(p); };
       if (!days || !projRows || !refs) { for (let i = 0; i < 3; i++) { const l = sk('st-sk-row'); l.style.width = 90 - i * 18 + '%'; notes.append(l); } }
-      else if (!now) notes.append(el('p', null, `No visitors ${during(d)} yet.`), el('p', 'dim', 'Share a tagged link, like ?ref=linkedin, to see where people come from.'));
+      else if (!now) notes.append(el('p', null, `No visits ${during(d)} yet.`), el('p', 'dim', 'Share a tagged link, like ?ref=linkedin, to see where people come from.'));
       else {
-        if (now < MIN) notes.append(el('p', 'dim', `${plural(now, 'visitor')} ${during(d)}: too few to call a pattern, so these are plain counts.`));
-        else if (d && before >= MIN) { const pct = Math.round((now - before) / before * 100); say(`${pct >= 0 ? 'Up' : 'Down'} ${Math.abs(pct)}% on the ${label} before (${before} → ${now} visitors).`); }
+        if (now < MIN) notes.append(el('p', 'dim', `${plural(now, 'visit')} ${during(d)}: too few to call a pattern, so these are plain counts.`));
+        else if (d && before >= MIN) { const pct = Math.round((now - before) / before * 100); say(`${pct >= 0 ? 'Up' : 'Down'} ${Math.abs(pct)}% on the ${label} before (${before} → ${now} visits).`); }
         const [p1, p2] = projRows;
         if (p1?.n) say(tag(p1), p1.n > (p2?.n || 0) ? ` was opened most: ${plural(p1.n, 'visit')}.` : ` and ${p2.label} are level at ${plural(p1.n, 'visit')} each.`);
         else say('No project opened yet.');
@@ -3794,7 +3804,9 @@ if (/^(localhost|127\.|10\.|192\.168\.)/.test(location.hostname)) {
   // a link to the list or one project opens straight into it (a refresh stays where you were)
   statsDoor();
   const first = parse(location.hash);
-  if (!/^#\/stats\/?$/.test(location.hash)) count(first);
+  // 'visit': once per visit (GoatCounter keeps one per session), the dashboard's visitor count. Its own
+  // total adds up every page and event a visit touched, so it can't be used for that
+  if (!/^#\/stats\/?$/.test(location.hash)) { count(first); track('visit'); }
   history.replaceState({ view: first, scroll: 0 }, '', hrefOf(first));
   if (first.name !== 'home') ready.then(() => show(first, 0));
 })();
