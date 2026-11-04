@@ -42,7 +42,7 @@ function csv(text) { // RFC 4180
 }
 
 const state = await open();
-let r = await gc('/export', { method: 'POST', body: JSON.stringify(state.last ? { start_from_hit_id: state.last } : {}) });
+let r = await gc('/export', { method: 'POST', body: JSON.stringify({ format: 'csv', ...(state.last ? { start_from_hit_id: state.last } : {}) }) });
 let j = await r.json().catch(() => ({}));
 if (r.status === 429) { console.log('rate limited:', j.error); process.exit(0); } // next hour
 if (!r.ok || !j.id) { console.log('export failed:', r.status, JSON.stringify(j)); process.exit(1); }
