@@ -1,4 +1,4 @@
-# Once an hour: export new pageviews from GoatCounter into visits.json (locked with the GOAT key)
+# Once an hour: export new pageviews from GoatCounter into visits.json (locked with the GOAT key,
 # on the visits-data branch, which the stats page's Recent visits card reads.
 name: Recent visits
 on:
