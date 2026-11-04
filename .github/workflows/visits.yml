@@ -1,0 +1,38 @@
+# Once an hour: export new pageviews from GoatCounter into visits.json (locked with the GOAT key)
+# on the visits-data branch, which the stats page's Recent visits card reads.
+name: Recent visits
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency: visits
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: main
+      - name: Check out visits-data (made on the first run)
+        run: |
+          git init -q data && cd data
+          git remote add origin "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          if git fetch -q --depth 1 origin visits-data; then git checkout -q FETCH_HEAD; fi
+          git checkout -q -B visits-data
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Export
+        env:
+          GOAT_KEY: ${{ secrets.GOAT_KEY }}
+        run: node main/.github/visits/export.mjs data/visits.json
+      - name: Save
+        run: |
+          cd data
+          git add visits.json 2>/dev/null || exit 0
+          git diff --cached --quiet && exit 0
+          git -c user.name='visits robot' -c user.email='actions@users.noreply.github.com' commit -q -m "Visits $(date -u +%FT%RZ)"
+          git push -q origin visits-data
