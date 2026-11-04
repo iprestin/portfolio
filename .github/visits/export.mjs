@@ -58,9 +58,9 @@ if (!text) { console.log('no new pageviews'); process.exit(0); } // an export wi
 const rows = csv(text);
 if (!rows.length || !/^2,?Path$/.test(rows[0][0] === '2' ? '2Path' : rows[0][0]) || rows[0].length < 14) { // the header starts "2Path,…": version 2
   console.log('export format changed:', rows[0]?.slice(0, 3)); process.exit(1); }
-// path, event, browser, system, session, referrer, screen size, location, date (no bots, no user agent)
+// path, event, browser, system, session, referrer, screen size, location, date, title (no bots, no user agent)
 const fresh = rows.slice(1).filter(x => x.length >= 14 && (x[7] === '0' || x[7] === '' || x[7] === 'false'))
-  .map(x => [x[0], x[2] === 'true' ? 1 : 0, x[4], x[5], x[6], x[8], x[10], x[11], x[13]]);
+  .map(x => [x[0], x[2] === 'true' ? 1 : 0, x[4], x[5], x[6], x[8], x[10], x[11], x[13], x[1]]); // + title: the 'visit' event's carries the full screen size
 const seen = new Set(state.hits.map(h => h.join('\t')));
 const added = fresh.filter(h => !seen.has(h.join('\t')));
 state.hits.push(...added);
