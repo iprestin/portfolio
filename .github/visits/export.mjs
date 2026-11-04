@@ -46,6 +46,7 @@ let r = await gc('/export', { method: 'POST', body: JSON.stringify({ format: 'cs
 let j = await r.json().catch(() => ({}));
 if (r.status === 429) { console.log('rate limited:', j.error); process.exit(0); } // next hour
 if (!r.ok || !j.id) { console.log('export failed:', r.status, JSON.stringify(j)); process.exit(1); }
+console.log('export', j.id);
 for (let i = 0; i < 60 && !j.finished_at; i++) { await wait(3000); j = await (await gc('/export/' + j.id)).json(); }
 if (!j.finished_at) { console.log('export took too long'); process.exit(1); }
 r = await gc('/export/' + j.id + '/download');
@@ -53,7 +54,7 @@ if (!r.ok) { console.log('download failed:', r.status); process.exit(1); }
 let buf = Buffer.from(await r.arrayBuffer());
 if (buf[0] === 0x1f && buf[1] === 0x8b) buf = gunzipSync(buf);
 const rows = csv(buf.toString('utf8').trim());
-if (!rows.length || rows[0][0] !== '2') { // the header starts "2,Path,…": version 2
+if (!rows.length || !/^2,?Path$/.test(rows[0][0] === '2' ? '2Path' : rows[0][0]) || rows[0].length < 14) { // the header starts "2Path,…": version 2
   console.log('export format changed:', rows[0]?.slice(0, 3)); process.exit(1); }
 // path, event, browser, system, session, referrer, screen size, location, date (no bots, no user agent)
 const fresh = rows.slice(1).filter(x => x.length >= 14 && (x[7] === '0' || x[7] === '' || x[7] === 'false'))
