@@ -53,7 +53,9 @@ r = await gc('/export/' + j.id + '/download');
 if (!r.ok) { console.log('download failed:', r.status); process.exit(1); }
 let buf = Buffer.from(await r.arrayBuffer());
 if (buf[0] === 0x1f && buf[1] === 0x8b) buf = gunzipSync(buf);
-const rows = csv(buf.toString('utf8').trim());
+const text = buf.toString('utf8').trim();
+if (!text) { console.log('no new pageviews'); process.exit(0); } // an export with nothing new is an empty file
+const rows = csv(text);
 if (!rows.length || !/^2,?Path$/.test(rows[0][0] === '2' ? '2Path' : rows[0][0]) || rows[0].length < 14) { // the header starts "2Path,…": version 2
   console.log('export format changed:', rows[0]?.slice(0, 3)); process.exit(1); }
 // path, event, browser, system, session, referrer, screen size, location, date (no bots, no user agent)
