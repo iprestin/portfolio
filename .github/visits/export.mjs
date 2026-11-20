@@ -42,9 +42,15 @@ function csv(text) { // RFC 4180
 }
 
 const state = await open();
-let r = await gc('/export', { method: 'POST', body: JSON.stringify({ format: 'csv', ...(state.last ? { start_from_hit_id: state.last } : {}) }) });
-let j = await r.json().catch(() => ({}));
+let r, j;
+for (let i = 0; i < 4; i++) { // GoatCounter now and then answers 404 "not found" to a good request: wait and ask again
+  if (i) await wait(20000);
+  r = await gc('/export', { method: 'POST', body: JSON.stringify({ format: 'csv', ...(state.last ? { start_from_hit_id: state.last } : {}) }) });
+  j = await r.json().catch(() => ({}));
+  if (r.status !== 404) break;
+}
 if (r.status === 429) { console.log('rate limited:', j.error); process.exit(0); } // next hour
+if (r.status === 404) { console.log('::warning::GoatCounter kept answering 404; trying again next hour'); process.exit(0); }
 if (!r.ok || !j.id) { console.log('export failed:', r.status, JSON.stringify(j)); process.exit(1); }
 console.log('export', j.id);
 for (let i = 0; i < 60 && !j.finished_at; i++) { await wait(3000); j = await (await gc('/export/' + j.id)).json(); }
